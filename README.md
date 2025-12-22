@@ -14,8 +14,19 @@ Select & Copy Things Easily in VS Code - a port of [easy-kill](https://github.co
 
 ### Commands
 
+**Selection Commands:**
 - **Easy Kill: Copy** (`ctrl+c` / `cmd+c`) - Copy text at point with intelligent selection.  If text is already selected, performs standard copy.
 - **Easy Kill: Select** (`alt+shift+2`) - Select text at point
+
+**Movement Commands:**
+- **Easy Kill: Forward Subword** (`alt+right` / `ctrl+alt+right`) - Move forward by subword (camelCase/snake_case aware)
+- **Easy Kill: Backward Subword** (`alt+left` / `ctrl+alt+left`) - Move backward by subword
+- **Easy Kill: Forward Word** (`ctrl+alt+right` / `ctrl+right`) - Move forward by word
+- **Easy Kill: Backward Word** (`ctrl+alt+left` / `ctrl+left`) - Move backward by word
+- **Easy Kill: Forward Sentence** - Move forward by sentence
+- **Easy Kill: Backward Sentence** - Move backward by sentence
+
+Note: Movement commands support selection when invoked with shift key.
 
 ### Interactive Selection
 
