@@ -523,7 +523,7 @@ function initializeThingBoundsTable() {
             currentRange = currentRange.parent;
           }
         }
-      } catch (e) {
+      } catch {
       }
 
       return findEnclosingPair(document, position, ["(", "[", "{"], [")", "]", "}"]);

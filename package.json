@@ -283,7 +283,9 @@
         "key": "ctrl+alt+shift+right",
         "mac": "alt+shift+right",
         "when": "editorTextFocus",
-        "args": { "select": true }
+        "args": {
+          "select": true
+        }
       },
       {
         "command": "easyKill.backwardSubword",
@@ -296,7 +298,9 @@
         "key": "ctrl+alt+shift+left",
         "mac": "alt+shift+left",
         "when": "editorTextFocus",
-        "args": { "select": true }
+        "args": {
+          "select": true
+        }
       },
       {
         "command": "easyKill.forwardWord",
@@ -309,7 +313,9 @@
         "key": "ctrl+shift+right",
         "mac": "ctrl+alt+shift+right",
         "when": "editorTextFocus",
-        "args": { "select": true }
+        "args": {
+          "select": true
+        }
       },
       {
         "command": "easyKill.backwardWord",
@@ -322,7 +328,9 @@
         "key": "ctrl+shift+left",
         "mac": "ctrl+alt+shift+left",
         "when": "editorTextFocus",
-        "args": { "select": true }
+        "args": {
+          "select": true
+        }
       }
     ]
   },
@@ -340,9 +348,12 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.0.0",
     "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^8.50.0",
+    "@typescript-eslint/parser": "^8.50.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.50.0"
   }
 }
