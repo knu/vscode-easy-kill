@@ -1,0 +1,11 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "Asia/Tokyo",
+  "schedule": ["after 9am and before 1pm on Saturday"],
+  "npm": {
+    "minimumReleaseAge": "3 days"
+  }
+}
