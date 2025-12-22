@@ -1,0 +1,38 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="128" height="128" fill="#2D2D30"/>
+
+  <!-- Clipboard -->
+  <rect x="30" y="18" width="68" height="92" rx="6" fill="#1E1E1E" stroke="#007ACC" stroke-width="3"/>
+  <rect x="48" y="12" width="32" height="14" rx="4" fill="#569CD6"/>
+
+  <!-- Expanded paragraph highlight (outermost - lightest) -->
+  <rect x="40" y="42" width="48" height="44" rx="3" fill="#4EC9B0" opacity="0.12"/>
+
+  <!-- Current line highlight (middle layer - darker) -->
+  <rect x="42" y="45" width="44" height="10" rx="2" fill="#4EC9B0" opacity="0.25"/>
+
+  <!-- First line with THE WORD -->
+  <rect x="44" y="48" width="16" height="5" rx="2" fill="#858585" opacity="0.4"/>
+
+  <!-- THE CAPTURED WORD (innermost - strongest highlight) -->
+  <rect x="62" y="47" width="20" height="6" rx="2" fill="#4EC9B0"/>
+
+  <!-- Other lines in paragraph (lighter) -->
+  <rect x="44" y="60" width="32" height="5" rx="2" fill="#4EC9B0" opacity="0.6"/>
+  <rect x="44" y="72" width="36" height="5" rx="2" fill="#4EC9B0" opacity="0.6"/>
+
+  <!-- Regular text lines below paragraph -->
+  <rect x="44" y="92" width="28" height="3" rx="1.5" fill="#858585" opacity="0.4"/>
+  <rect x="44" y="100" width="35" height="3" rx="1.5" fill="#858585" opacity="0.4"/>
+
+  <!-- Cursor at the word -->
+  <rect x="60" y="46" width="2" height="8" fill="#00FF00" opacity="0.9"/>
+
+  <!-- Target lock around initial word (showing it's captured) -->
+  <circle cx="72" cy="50" r="12" fill="none" stroke="#FF6B35" stroke-width="2" opacity="0.7" stroke-dasharray="3,2"/>
+
+  <!-- Expand arrows showing region can grow -->
+  <path d="M 26 60 L 20 64 L 26 68" stroke="#FF6B35" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 102 60 L 108 64 L 102 68" stroke="#FF6B35" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,348 @@
+{
+  "name": "easy-kill",
+  "displayName": "Easy Kill",
+  "description": "Select & Copy Things Easily in VS Code - a port of easy-kill for Emacs",
+  "version": "0.1.0",
+  "publisher": "knu",
+  "author": "Akinori Musha",
+  "license": "MIT",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/knu/vscode-easy-kill"
+  },
+  "bugs": {
+    "url": "https://github.com/knu/vscode-easy-kill/issues"
+  },
+  "homepage": "https://github.com/knu/vscode-easy-kill#readme",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "copy",
+    "kill",
+    "mark",
+    "selection",
+    "emacs",
+    "easy-kill"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Easy Kill",
+      "properties": {
+        "easyKill.keyBindings": {
+          "type": "object",
+          "default": {
+            "w": "subword",
+            "W": "word",
+            "s": "word",
+            "e": "sexp",
+            "l": "line",
+            ".": "sentence",
+            "p": "paragraph",
+            "d": "defun",
+            "D": "defun-name",
+            "f": "string-to-char-forward",
+            "b": "block",
+            "q": "string",
+            "Q": "string-universal",
+            "(": "parentheses",
+            ")": "parentheses-content",
+            "[": "brackets",
+            "]": "brackets-content",
+            "{": "curlies",
+            "}": "curlies-content",
+            "a": "buffer",
+            ">": "buffer-after",
+            "<": "buffer-before",
+            "/": "filename",
+            "n": "buffer-file-name",
+            "u": "url",
+            "@": "email",
+            "^": "backward-line-edge",
+            "$": "forward-line-edge",
+            "t": "string-up-to-char-forward",
+            "F": "string-to-char-backward",
+            "T": "string-up-to-char-backward"
+          },
+          "description": "Key to region type mapping.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "easyKill.objectTypeOrderForCopy": {
+          "type": "array",
+          "default": [
+            "subword",
+            "word",
+            "line",
+            "paragraph"
+          ],
+          "description": "Order of object types to try for initial selection in Copy mode. First matching type will be selected.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "easyKill.objectTypeOrderForSelect": {
+          "type": "array",
+          "default": [
+            "subword",
+            "word",
+            "line",
+            "paragraph"
+          ],
+          "description": "Order of object types to try for initial selection in Select mode. First matching type will be selected.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "easyKill.copy",
+        "title": "Easy Kill: Copy"
+      },
+      {
+        "command": "easyKill.select",
+        "title": "Easy Kill: Select"
+      },
+      {
+        "command": "easyKill.copySubword",
+        "title": "Easy Kill: Copy Subword"
+      },
+      {
+        "command": "easyKill.selectSubword",
+        "title": "Easy Kill: Select Subword"
+      },
+      {
+        "command": "easyKill.copyWord",
+        "title": "Easy Kill: Copy Word"
+      },
+      {
+        "command": "easyKill.selectWord",
+        "title": "Easy Kill: Select Word"
+      },
+      {
+        "command": "easyKill.copyLine",
+        "title": "Easy Kill: Copy Line"
+      },
+      {
+        "command": "easyKill.selectLine",
+        "title": "Easy Kill: Select Line"
+      },
+      {
+        "command": "easyKill.copySentence",
+        "title": "Easy Kill: Copy Sentence"
+      },
+      {
+        "command": "easyKill.selectSentence",
+        "title": "Easy Kill: Select Sentence"
+      },
+      {
+        "command": "easyKill.copyParagraph",
+        "title": "Easy Kill: Copy Paragraph"
+      },
+      {
+        "command": "easyKill.selectParagraph",
+        "title": "Easy Kill: Select Paragraph"
+      },
+      {
+        "command": "easyKill.copyFunction",
+        "title": "Easy Kill: Copy Function"
+      },
+      {
+        "command": "easyKill.selectFunction",
+        "title": "Easy Kill: Select Function"
+      },
+      {
+        "command": "easyKill.copyBlock",
+        "title": "Easy Kill: Copy Block"
+      },
+      {
+        "command": "easyKill.selectBlock",
+        "title": "Easy Kill: Select Block"
+      },
+      {
+        "command": "easyKill.copySexp",
+        "title": "Easy Kill: Copy S-expression"
+      },
+      {
+        "command": "easyKill.selectSexp",
+        "title": "Easy Kill: Select S-expression"
+      },
+      {
+        "command": "easyKill.copyDefun",
+        "title": "Easy Kill: Copy Defun"
+      },
+      {
+        "command": "easyKill.selectDefun",
+        "title": "Easy Kill: Select Defun"
+      },
+      {
+        "command": "easyKill.copyToCharForward",
+        "title": "Easy Kill: Copy To Character Forward"
+      },
+      {
+        "command": "easyKill.selectToCharForward",
+        "title": "Easy Kill: Select To Character Forward"
+      },
+      {
+        "command": "easyKill.copyUpToCharForward",
+        "title": "Easy Kill: Copy Up To Character Forward"
+      },
+      {
+        "command": "easyKill.selectUpToCharForward",
+        "title": "Easy Kill: Select Up To Character Forward"
+      },
+      {
+        "command": "easyKill.copyToCharBackward",
+        "title": "Easy Kill: Copy To Character Backward"
+      },
+      {
+        "command": "easyKill.selectToCharBackward",
+        "title": "Easy Kill: Select To Character Backward"
+      },
+      {
+        "command": "easyKill.copyUpToCharBackward",
+        "title": "Easy Kill: Copy Up To Character Backward"
+      },
+      {
+        "command": "easyKill.selectUpToCharBackward",
+        "title": "Easy Kill: Select Up To Character Backward"
+      },
+      {
+        "command": "easyKill.cancel",
+        "title": "Easy Kill: Cancel"
+      },
+      {
+        "command": "easyKill.forwardSubword",
+        "title": "Easy Kill: Forward Subword"
+      },
+      {
+        "command": "easyKill.backwardSubword",
+        "title": "Easy Kill: Backward Subword"
+      },
+      {
+        "command": "easyKill.forwardWord",
+        "title": "Easy Kill: Forward Word"
+      },
+      {
+        "command": "easyKill.backwardWord",
+        "title": "Easy Kill: Backward Word"
+      },
+      {
+        "command": "easyKill.forwardSentence",
+        "title": "Easy Kill: Forward Sentence"
+      },
+      {
+        "command": "easyKill.backwardSentence",
+        "title": "Easy Kill: Backward Sentence"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "easyKill.copy",
+        "key": "ctrl+c",
+        "mac": "cmd+c",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "easyKill.select",
+        "key": "alt+shift+2",
+        "mac": "alt+shift+2",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "easyKill.cancel",
+        "key": "escape",
+        "when": "editorTextFocus && easyKillActive"
+      },
+      {
+        "command": "-workbench.action.gotoLine",
+        "key": "ctrl+g",
+        "when": "easyKillActive"
+      },
+      {
+        "command": "easyKill.cancel",
+        "key": "ctrl+g",
+        "when": "editorTextFocus && easyKillActive"
+      },
+      {
+        "command": "easyKill.forwardSubword",
+        "key": "ctrl+alt+right",
+        "mac": "alt+right",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "easyKill.forwardSubword",
+        "key": "ctrl+alt+shift+right",
+        "mac": "alt+shift+right",
+        "when": "editorTextFocus",
+        "args": { "select": true }
+      },
+      {
+        "command": "easyKill.backwardSubword",
+        "key": "ctrl+alt+left",
+        "mac": "alt+left",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "easyKill.backwardSubword",
+        "key": "ctrl+alt+shift+left",
+        "mac": "alt+shift+left",
+        "when": "editorTextFocus",
+        "args": { "select": true }
+      },
+      {
+        "command": "easyKill.forwardWord",
+        "key": "ctrl+right",
+        "mac": "ctrl+alt+right",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "easyKill.forwardWord",
+        "key": "ctrl+shift+right",
+        "mac": "ctrl+alt+shift+right",
+        "when": "editorTextFocus",
+        "args": { "select": true }
+      },
+      {
+        "command": "easyKill.backwardWord",
+        "key": "ctrl+left",
+        "mac": "ctrl+alt+left",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "easyKill.backwardWord",
+        "key": "ctrl+shift+left",
+        "mac": "ctrl+alt+shift+left",
+        "when": "editorTextFocus",
+        "args": { "select": true }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vscode-test",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.0.0",
+    "@types/vscode": "^1.95.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.7.1",
+    "typescript": "^5.9.3"
+  }
+}
