@@ -42,10 +42,15 @@ interface Selection {
 }
 
 interface ThingBounds {
-  getRange(editor: vscode.TextEditor, position: vscode.Position): Promise<vscode.Range | null>;
-  getNextEnd(editor: vscode.TextEditor, position: vscode.Position): Promise<vscode.Position | null>;
-  getPreviousBeginning(editor: vscode.TextEditor, position: vscode.Position): Promise<vscode.Position | null>;
+  getRange(editor: vscode.TextEditor, position: vscode.Position, arg?: string): Promise<vscode.Range | null>;
+  getNextEnd(editor: vscode.TextEditor, position: vscode.Position, arg?: string): Promise<vscode.Position | null>;
+  getPreviousBeginning(
+    editor: vscode.TextEditor,
+    position: vscode.Position,
+    arg?: string
+  ): Promise<vscode.Position | null>;
   instantCopy?(editor: vscode.TextEditor, position: vscode.Position): Promise<string | null>;
+  readArgument?(editor: vscode.TextEditor, position: vscode.Position): Promise<string | null>;
 }
 
 const thingBoundsTable: Record<ThingType, ThingBounds> = {} as Record<ThingType, ThingBounds>;
@@ -54,10 +59,9 @@ let currentSelection: Selection | null = null;
 let isActive = false;
 let isSelectMode = false;
 let statusBarItem: vscode.StatusBarItem;
-let lastCharSearchChar: string | null = null;
 let lastCopiedText: string | null = null;
 let initialCursorPosition: vscode.Position | null = null;
-let awaitingCharInput: { type: ThingType; resolve: (char: string | null) => void } | null = null;
+let awaitingArgument: { type: ThingType; resolve: (arg: string | null) => void } | null = null;
 let cancelCallback: (() => void) | null = null;
 let globalTypeDisposable: vscode.Disposable | null = null;
 let globalChangeDisposable: vscode.Disposable | null = null;
@@ -140,11 +144,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   for (const { type, name } of thingTypes) {
     context.subscriptions.push(
-      vscode.commands.registerCommand(`easyKill.copy${name}`, () => startEasyKillWithType(false, type))
+      vscode.commands.registerCommand(`easyKill.copy${name}`, () => startEasyKill(false, [type]))
     );
 
     context.subscriptions.push(
-      vscode.commands.registerCommand(`easyKill.select${name}`, () => startEasyKillWithType(true, type))
+      vscode.commands.registerCommand(`easyKill.select${name}`, () => startEasyKill(true, [type]))
     );
   }
 
@@ -852,87 +856,71 @@ function initializeThingBoundsTable() {
     forward: boolean,
     inclusive: boolean
   ): { start: number; end: number } | null => {
-    let targetOffset = -1;
-
-    if (forward) {
-      targetOffset = text.indexOf(char, startOffset + 1);
-    } else {
-      targetOffset = text.lastIndexOf(char, startOffset - 1);
-    }
+    const targetOffset = forward ? text.indexOf(char, startOffset + 1) : text.lastIndexOf(char, startOffset - 1);
 
     if (targetOffset === -1) return null;
 
-    let startPos = startOffset;
-    let endPos = targetOffset;
-
     if (forward) {
-      if (inclusive) {
-        endPos = targetOffset + 1;
-      } else {
-        endPos = targetOffset;
-      }
+      return { start: startOffset, end: inclusive ? targetOffset + 1 : targetOffset };
     } else {
-      if (inclusive) {
-        startPos = targetOffset;
-        endPos = startOffset;
-      } else {
-        startPos = targetOffset + 1;
-        endPos = startOffset;
-      }
+      return { start: inclusive ? targetOffset : targetOffset + 1, end: startOffset };
     }
-
-    return { start: startPos, end: endPos };
   };
 
-  const createCharSearchBounds = (forward: boolean, inclusive: boolean): ThingBounds => ({
-    async getRange(editor, position) {
-      if (!lastCharSearchChar) return null;
+  const createCharSearchBounds = (forward: boolean, inclusive: boolean): ThingBounds => {
+    let lastChar: string | null = null;
 
-      const { document } = editor;
-      const text = document.getText();
-      const offset = document.offsetAt(position);
+    return {
+      async getRange(editor, position, arg) {
+        const char = arg ?? lastChar;
+        if (!char) return null;
 
-      const result = findCharInText(text, lastCharSearchChar, offset, forward, inclusive);
-      if (!result) return null;
+        const { document } = editor;
+        const text = document.getText();
+        const offset = document.offsetAt(position);
 
-      return new vscode.Range(document.positionAt(result.start), document.positionAt(result.end));
-    },
-    async getNextEnd(editor, position) {
-      if (!lastCharSearchChar) return null;
-
-      const { document } = editor;
-      const text = document.getText();
-      const offset = document.offsetAt(position);
-
-      if (forward) {
-        const result = findCharInText(text, lastCharSearchChar, offset, true, inclusive);
+        const result = findCharInText(text, char, offset, forward, inclusive);
         if (!result) return null;
-        return document.positionAt(result.end);
-      } else {
-        const result = findCharInText(text, lastCharSearchChar, offset, false, inclusive);
-        if (!result) return null;
-        return document.positionAt(result.start);
-      }
-    },
-    async getPreviousBeginning(editor, position) {
-      if (!lastCharSearchChar) return null;
 
-      const { document } = editor;
-      const text = document.getText();
-      const offset = document.offsetAt(position);
+        return new vscode.Range(document.positionAt(result.start), document.positionAt(result.end));
+      },
+      async getNextEnd(editor, position, arg) {
+        const char = arg ?? lastChar;
+        if (!char) return null;
 
-      if (forward) {
-        const result = findCharInText(text, lastCharSearchChar, offset, false, inclusive);
-        if (!result) return null;
-        return document.positionAt(result.start);
-      } else {
-        const result = findCharInText(text, lastCharSearchChar, offset, true, inclusive);
-        if (!result) return null;
-        return document.positionAt(result.end);
-      }
-    },
-    async instantCopy(editor, position) {
-      const char = await new Promise<string | null>((resolve) => {
+        const { document } = editor;
+        const text = document.getText();
+        const offset = document.offsetAt(position);
+
+        if (forward) {
+          const result = findCharInText(text, char, offset, true, inclusive);
+          if (!result) return null;
+          return document.positionAt(result.end);
+        } else {
+          const result = findCharInText(text, char, offset, false, inclusive);
+          if (!result) return null;
+          return document.positionAt(result.start);
+        }
+      },
+      async getPreviousBeginning(editor, position, arg) {
+        const char = arg ?? lastChar;
+        if (!char) return null;
+
+        const { document } = editor;
+        const text = document.getText();
+        const offset = document.offsetAt(position);
+
+        if (forward) {
+          const result = findCharInText(text, char, offset, false, inclusive);
+          if (!result) return null;
+          return document.positionAt(result.start);
+        } else {
+          const result = findCharInText(text, char, offset, true, inclusive);
+          if (!result) return null;
+          return document.positionAt(result.end);
+        }
+      },
+      async readArgument(editor, position) {
         const type = forward
           ? inclusive
             ? "string-to-char-forward"
@@ -940,28 +928,22 @@ function initializeThingBoundsTable() {
           : inclusive
             ? "string-to-char-backward"
             : "string-up-to-char-backward";
-        awaitingCharInput = { type: type as ThingType, resolve };
-        vscode.window.setStatusBarMessage(`$(search) ${forward ? "Find" : "Reverse find"} character...`, 5000);
-      });
 
-      awaitingCharInput = null;
+        const char = await new Promise<string | null>((resolve) => {
+          awaitingArgument = { type: type as ThingType, resolve };
+          vscode.window.setStatusBarMessage(`$(search) ${forward ? "Find" : "Reverse find"} character...`, 5000);
+        });
 
-      if (!char) return null;
+        awaitingArgument = null;
 
-      lastCharSearchChar = char;
+        if (char) {
+          lastChar = char;
+        }
 
-      const { document } = editor;
-      const text = document.getText();
-      const offset = document.offsetAt(position);
-
-      const result = findCharInText(text, char, offset, forward, inclusive);
-      if (!result) return null;
-
-      const range = new vscode.Range(document.positionAt(result.start), document.positionAt(result.end));
-
-      return document.getText(range);
-    },
-  });
+        return char;
+      },
+    };
+  };
 
   const createPatternBounds = (patterns: RegExp[]): ThingBounds => ({
     async getRange(editor, position) {
@@ -1073,44 +1055,63 @@ function initializeThingBoundsTable() {
   thingBoundsTable["string-up-to-char-backward"] = createCharSearchBounds(false, false);
 }
 
-async function startEasyKill(selectMode: boolean) {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    return;
+async function tryInstantCopy(
+  editor: vscode.TextEditor,
+  position: vscode.Position,
+  type: ThingType,
+  selectMode: boolean
+): Promise<boolean> {
+  const bounds = thingBoundsTable[type];
+  if (!bounds.instantCopy) {
+    return false;
   }
 
-  if (isActive) {
-    return;
+  if (selectMode) {
+    vscode.window.showInformationMessage(`${type} is only available in copy mode`);
+    return false;
   }
-
-  const position = editor.selection.active;
-  initialCursorPosition = position;
 
   isActive = true;
   vscode.commands.executeCommand("setContext", "easyKillActive", true);
-  currentSelection = null;
-  editor.selection = new vscode.Selection(position, position);
+  let tempDisposable: vscode.Disposable | null = null;
 
-  const config = vscode.workspace.getConfiguration("easyKill");
-  const configKey = selectMode ? "objectTypeOrderForSelect" : "objectTypeOrderForCopy";
-  const things: ThingType[] = config.get(configKey, ["subword", "word", "line", "paragraph"]);
-  let selection: Selection | null = null;
-
-  for (const thing of things) {
-    const range = await getThingRange(editor, position, thing);
-    if (range && !range.isEmpty) {
-      const text = editor.document.getText(range);
-      selection = { type: thing, range, initialRange: range, text, count: 1 };
-      break;
+  tempDisposable = vscode.commands.registerCommand("type", async (args) => {
+    if (awaitingArgument) {
+      awaitingArgument.resolve(args.text);
+      return;
     }
-  }
+    return vscode.commands.executeCommand("default:type", args);
+  });
 
-  if (!selection) {
+  const text = await bounds.instantCopy(editor, position);
+
+  tempDisposable?.dispose();
+
+  if (!text) {
     isActive = false;
     vscode.commands.executeCommand("setContext", "easyKillActive", false);
-    return;
+    vscode.window.showInformationMessage(`No ${type}`);
+    return false;
   }
 
+  const range = await bounds.getRange(editor, position);
+  if (!range) {
+    isActive = false;
+    vscode.commands.executeCommand("setContext", "easyKillActive", false);
+    copyToClipboard(text);
+    const preview = text.length > 50 ? text.substring(0, 47) + "..." : text;
+    vscode.window.showInformationMessage(`Copied ${type}: ${preview}`);
+    return true;
+  }
+
+  if (range.isEmpty) {
+    isActive = false;
+    vscode.commands.executeCommand("setContext", "easyKillActive", false);
+    vscode.window.showInformationMessage(`No ${type}`);
+    return false;
+  }
+
+  const selection: Selection = { type, range, initialRange: range, text, count: 1 };
   currentSelection = selection;
   isSelectMode = selectMode;
 
@@ -1119,9 +1120,75 @@ async function startEasyKill(selectMode: boolean) {
   }
 
   updateSelection(editor, selection, selectMode);
+  return true;
 }
 
-async function startEasyKillWithType(selectMode: boolean, type: ThingType) {
+async function tryThingType(
+  editor: vscode.TextEditor,
+  position: vscode.Position,
+  type: ThingType,
+  selectMode: boolean
+): Promise<boolean> {
+  if (await tryInstantCopy(editor, position, type, selectMode)) {
+    return true;
+  }
+
+  const bounds = thingBoundsTable[type];
+  let arg: string | undefined;
+
+  if (bounds.readArgument) {
+    isActive = true;
+    vscode.commands.executeCommand("setContext", "easyKillActive", true);
+
+    let tempDisposable: vscode.Disposable | null = null;
+    tempDisposable = vscode.commands.registerCommand("type", async (args) => {
+      if (awaitingArgument) {
+        awaitingArgument.resolve(args.text);
+        return;
+      }
+      return vscode.commands.executeCommand("default:type", args);
+    });
+
+    arg = (await bounds.readArgument(editor, position)) ?? undefined;
+
+    tempDisposable?.dispose();
+
+    if (!arg) {
+      isActive = false;
+      vscode.commands.executeCommand("setContext", "easyKillActive", false);
+      vscode.window.showInformationMessage(`No ${type}`);
+      return false;
+    }
+  }
+
+  const range = await getThingRange(editor, position, type, arg);
+  if (range && !range.isEmpty) {
+    if (!isActive) {
+      isActive = true;
+      vscode.commands.executeCommand("setContext", "easyKillActive", true);
+    }
+    const text = editor.document.getText(range);
+    const selection: Selection = { type, range, initialRange: range, text, count: 1 };
+
+    currentSelection = selection;
+    isSelectMode = selectMode;
+
+    if (!selectMode) {
+      copyToClipboard(selection.text);
+    }
+
+    updateSelection(editor, selection, selectMode);
+    return true;
+  }
+
+  if (isActive) {
+    isActive = false;
+    vscode.commands.executeCommand("setContext", "easyKillActive", false);
+  }
+  return false;
+}
+
+async function startEasyKill(selectMode: boolean, initialTypeList?: ThingType[]) {
   const editor = vscode.window.activeTextEditor;
   if (!editor || isActive) {
     return;
@@ -1133,88 +1200,35 @@ async function startEasyKillWithType(selectMode: boolean, type: ThingType) {
   currentSelection = null;
   editor.selection = new vscode.Selection(position, position);
 
-  const bounds = thingBoundsTable[type];
-  if (bounds?.instantCopy) {
-    isActive = true;
-    vscode.commands.executeCommand("setContext", "easyKillActive", true);
-    let tempDisposable: vscode.Disposable | null = null;
-
-    tempDisposable = vscode.commands.registerCommand("type", async (args) => {
-      if (awaitingCharInput) {
-        awaitingCharInput.resolve(args.text);
-        return;
-      }
-      return vscode.commands.executeCommand("default:type", args);
-    });
-
-    const text = await bounds.instantCopy(editor, position);
-
-    tempDisposable?.dispose();
-
-    if (!text) {
-      isActive = false;
-      vscode.commands.executeCommand("setContext", "easyKillActive", false);
-      vscode.window.showInformationMessage(`No ${type}`);
-      return;
-    }
-
-    const range = await bounds.getRange(editor, position);
-    if (!range) {
-      isActive = false;
-      vscode.commands.executeCommand("setContext", "easyKillActive", false);
-      copyToClipboard(text);
-      vscode.window.showInformationMessage(`Copied ${type}`);
-      return;
-    }
-
-    if (range.isEmpty) {
-      isActive = false;
-      vscode.commands.executeCommand("setContext", "easyKillActive", false);
-      vscode.window.showInformationMessage(`No ${type}`);
-      return;
-    }
-
-    const selection: Selection = { type, range, initialRange: range, text, count: 1 };
-    currentSelection = selection;
-    isSelectMode = selectMode;
-
-    if (!selectMode) {
-      copyToClipboard(selection.text);
-    }
-
-    updateSelection(editor, selection, selectMode);
-    return;
+  let things: ThingType[];
+  if (initialTypeList) {
+    things = initialTypeList;
+  } else {
+    const config = vscode.workspace.getConfiguration("easyKill");
+    const configKey = selectMode ? "objectTypeOrderForSelect" : "objectTypeOrderForCopy";
+    things = config.get(configKey, ["subword", "word", "line", "paragraph"]);
   }
 
-  const range = await getThingRange(editor, position, type);
-  if (!range || range.isEmpty) {
-    vscode.window.showInformationMessage(`No ${type}`);
-    return;
+  for (const type of things) {
+    if (await tryThingType(editor, position, type, selectMode)) {
+      return;
+    }
   }
 
-  isActive = true;
-  vscode.commands.executeCommand("setContext", "easyKillActive", true);
-  const text = editor.document.getText(range);
-  const selection: Selection = { type, range, initialRange: range, text, count: 1 };
-
-  currentSelection = selection;
-  isSelectMode = selectMode;
-
-  if (!selectMode) {
-    copyToClipboard(selection.text);
+  if (initialTypeList && initialTypeList.length === 1) {
+    vscode.window.showInformationMessage(`No ${initialTypeList[0]}`);
   }
-
-  updateSelection(editor, selection, selectMode);
 }
 
 async function getThingRange(
   editor: vscode.TextEditor,
   position: vscode.Position,
-  thing: ThingType
+  thing: ThingType,
+  arg?: string
 ): Promise<vscode.Range | null> {
   const bounds = thingBoundsTable[thing];
   if (!bounds) return null;
-  return bounds.getRange(editor, position);
+  return bounds.getRange(editor, position, arg);
 }
 
 function findEnclosingPair(
@@ -1315,8 +1329,8 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
   const cleanup = (resetCursor: boolean = false) => {
     if (!isActive) return;
 
-    awaitingCharInput?.resolve(null);
-    awaitingCharInput = null;
+    awaitingArgument?.resolve(null);
+    awaitingArgument = null;
 
     if (resetCursor && initialCursorPosition) {
       editor.selection = new vscode.Selection(initialCursorPosition, initialCursorPosition);
@@ -1347,8 +1361,8 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
 
     const char = args.text;
 
-    if (awaitingCharInput) {
-      awaitingCharInput.resolve(char);
+    if (awaitingArgument) {
+      awaitingArgument.resolve(char);
       return;
     }
 
@@ -1435,11 +1449,10 @@ async function changeSelectionType(editor: vscode.TextEditor, type: ThingType) {
   editor.selection = new vscode.Selection(initialCursorPosition, initialCursorPosition);
 
   const bounds = thingBoundsTable[type];
-  if (bounds?.instantCopy) {
-    const isCharSearch = type.startsWith("string-to-char-") || type.startsWith("string-up-to-char-");
 
-    if (!isCharSearch && isSelectMode) {
-      vscode.window.showInformationMessage("Not supported in Easy Kill: Select");
+  if (bounds.instantCopy) {
+    if (isSelectMode) {
+      vscode.window.showInformationMessage(`${type} is only available in copy mode`);
       return;
     }
 
@@ -1452,7 +1465,8 @@ async function changeSelectionType(editor: vscode.TextEditor, type: ThingType) {
     const range = await bounds.getRange(editor, initialCursorPosition);
     if (!range) {
       copyToClipboard(text);
-      vscode.window.showInformationMessage(`Copied ${type}`);
+      const preview = text.length > 50 ? text.substring(0, 47) + "..." : text;
+      vscode.window.showInformationMessage(`Copied ${type}: ${preview}`);
       return;
     }
 
@@ -1468,7 +1482,16 @@ async function changeSelectionType(editor: vscode.TextEditor, type: ThingType) {
     return;
   }
 
-  const range = await getThingRange(editor, initialCursorPosition, type);
+  let arg: string | undefined;
+  if (bounds.readArgument) {
+    arg = (await bounds.readArgument(editor, initialCursorPosition)) ?? undefined;
+    if (!arg) {
+      vscode.window.showInformationMessage(`No ${type}`);
+      return;
+    }
+  }
+
+  const range = await getThingRange(editor, initialCursorPosition, type, arg);
   if (range) {
     const text = editor.document.getText(range);
     currentSelection = {
@@ -1527,7 +1550,7 @@ async function updateSelectionWithCount(editor: vscode.TextEditor, newCount: num
   const { type, initialRange } = currentSelection;
   debug?.("[updateSelectionWithCount] currentSelection.count:", currentSelection.count, "type:", type);
 
-  const isBackwardType = type === "string-to-char-backward" || type === "string-up-to-char-backward";
+  const isBackwardType = type.endsWith("-backward");
 
   let newRange: vscode.Range | null = null;
 
