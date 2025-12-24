@@ -105,12 +105,7 @@ class MockTextDocument implements vscode.TextDocument {
       const end = start + match[0].length;
 
       if (position.character >= start && position.character <= end) {
-        return new vscode.Range(
-          position.line,
-          start,
-          position.line,
-          end
-        );
+        return new vscode.Range(position.line, start, position.line, end);
       }
     }
 
@@ -294,10 +289,7 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("This is a sentence.");
       const { sentenceBounds } = await import("./extension");
 
-      const range = await sentenceBounds.getRange(
-        { document: doc } as any,
-        pos(0, 5)
-      );
+      const range = await sentenceBounds.getRange({ document: doc } as any, pos(0, 5));
 
       assert.ok(range);
       assert.strictEqual(doc.getText(range), "This is a sentence.");
@@ -307,17 +299,11 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("First sentence.  Second sentence.");
       const { sentenceBounds } = await import("./extension");
 
-      const firstRange = await sentenceBounds.getRange(
-        { document: doc } as any,
-        pos(0, 5)
-      );
+      const firstRange = await sentenceBounds.getRange({ document: doc } as any, pos(0, 5));
       assert.ok(firstRange);
       assert.strictEqual(doc.getText(firstRange), "First sentence.");
 
-      const secondRange = await sentenceBounds.getRange(
-        { document: doc } as any,
-        pos(0, 20)
-      );
+      const secondRange = await sentenceBounds.getRange({ document: doc } as any, pos(0, 20));
       assert.ok(secondRange);
       assert.strictEqual(doc.getText(secondRange), "Second sentence.");
     });
@@ -326,10 +312,7 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("Is this a question?");
       const { sentenceBounds } = await import("./extension");
 
-      const range = await sentenceBounds.getRange(
-        { document: doc } as any,
-        pos(0, 5)
-      );
+      const range = await sentenceBounds.getRange({ document: doc } as any, pos(0, 5));
 
       assert.ok(range);
       assert.strictEqual(doc.getText(range), "Is this a question?");
@@ -339,10 +322,7 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("What a day!");
       const { sentenceBounds } = await import("./extension");
 
-      const range = await sentenceBounds.getRange(
-        { document: doc } as any,
-        pos(0, 5)
-      );
+      const range = await sentenceBounds.getRange({ document: doc } as any, pos(0, 5));
 
       assert.ok(range);
       assert.strictEqual(doc.getText(range), "What a day!");
@@ -354,10 +334,7 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("First.  Second.");
       const { sentenceBounds } = await import("./extension");
 
-      const end = await sentenceBounds.getNextEnd(
-        { document: doc } as any,
-        pos(0, 0)
-      );
+      const end = await sentenceBounds.getNextEnd({ document: doc } as any, pos(0, 0));
 
       assert.ok(end);
       assert.strictEqual(end.character, 8);
@@ -367,10 +344,7 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("First.  Second.");
       const { sentenceBounds } = await import("./extension");
 
-      const end = await sentenceBounds.getNextEnd(
-        { document: doc } as any,
-        pos(0, 8)
-      );
+      const end = await sentenceBounds.getNextEnd({ document: doc } as any, pos(0, 8));
 
       assert.ok(end);
       assert.strictEqual(end.character, 15);
@@ -380,10 +354,7 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("Only one.");
       const { sentenceBounds } = await import("./extension");
 
-      const end = await sentenceBounds.getNextEnd(
-        { document: doc } as any,
-        pos(0, 9)
-      );
+      const end = await sentenceBounds.getNextEnd({ document: doc } as any, pos(0, 9));
 
       assert.strictEqual(end, null);
     });
@@ -394,10 +365,7 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("First.  Second.");
       const { sentenceBounds } = await import("./extension");
 
-      const begin = await sentenceBounds.getPreviousBeginning(
-        { document: doc } as any,
-        pos(0, 12)
-      );
+      const begin = await sentenceBounds.getPreviousBeginning({ document: doc } as any, pos(0, 12));
 
       assert.ok(begin);
       assert.strictEqual(begin.character, 8);
@@ -407,10 +375,7 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("First sentence.");
       const { sentenceBounds } = await import("./extension");
 
-      const begin = await sentenceBounds.getPreviousBeginning(
-        { document: doc } as any,
-        pos(0, 5)
-      );
+      const begin = await sentenceBounds.getPreviousBeginning({ document: doc } as any, pos(0, 5));
 
       assert.ok(begin);
       assert.strictEqual(begin.character, 0);
@@ -422,10 +387,7 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("これは文です。");
       const { sentenceBounds } = await import("./extension");
 
-      const range = await sentenceBounds.getRange(
-        { document: doc } as any,
-        pos(0, 3)
-      );
+      const range = await sentenceBounds.getRange({ document: doc } as any, pos(0, 3));
 
       assert.ok(range);
       assert.strictEqual(doc.getText(range), "これは文です。");
@@ -435,17 +397,11 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("最初の文。二番目の文。");
       const { sentenceBounds } = await import("./extension");
 
-      const firstRange = await sentenceBounds.getRange(
-        { document: doc } as any,
-        pos(0, 2)
-      );
+      const firstRange = await sentenceBounds.getRange({ document: doc } as any, pos(0, 2));
       assert.ok(firstRange);
       assert.strictEqual(doc.getText(firstRange), "最初の文。");
 
-      const secondRange = await sentenceBounds.getRange(
-        { document: doc } as any,
-        pos(0, 8)
-      );
+      const secondRange = await sentenceBounds.getRange({ document: doc } as any, pos(0, 8));
       assert.ok(secondRange);
       assert.strictEqual(doc.getText(secondRange), "二番目の文。");
     });
@@ -456,17 +412,11 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("First sentence. Second sentence.");
       const { sentenceBounds } = await import("./extension");
 
-      const end1 = await sentenceBounds.getNextEnd(
-        { document: doc } as any,
-        pos(0, 0)
-      );
+      const end1 = await sentenceBounds.getNextEnd({ document: doc } as any, pos(0, 0));
       assert.ok(end1);
       assert.strictEqual(end1.character, 16);
 
-      const end2 = await sentenceBounds.getNextEnd(
-        { document: doc } as any,
-        end1
-      );
+      const end2 = await sentenceBounds.getNextEnd({ document: doc } as any, end1);
       assert.ok(end2);
       assert.strictEqual(end2.character, 32);
     });
@@ -475,10 +425,7 @@ suite("Sentence Navigation Tests", () => {
       const doc = new MockTextDocument("First sentence. Second sentence.");
       const { sentenceBounds } = await import("./extension");
 
-      const begin = await sentenceBounds.getPreviousBeginning(
-        { document: doc } as any,
-        pos(0, 32)
-      );
+      const begin = await sentenceBounds.getPreviousBeginning({ document: doc } as any, pos(0, 32));
       assert.ok(begin);
       assert.strictEqual(begin.character, 16);
     });

@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 
 type ThingType =
-  | "subword"        // subword (camelCase aware)
-  | "word"           // "word" (symbol in Emacs / WORD in Vim)
+  | "subword" // subword (camelCase aware)
+  | "word" // "word" (symbol in Emacs / WORD in Vim)
   | "line"
   | "sentence"
   | "paragraph"
@@ -67,27 +67,35 @@ let isInternalSelectionChange = false;
 let debug: ((message?: any, ...optionalParams: any[]) => void) | undefined = undefined;
 
 async function changeSelection(editor: vscode.TextEditor, selection: vscode.Selection) {
-  debug?.('[changeSelection] before: isInternalSelectionChange =', isInternalSelectionChange);
+  debug?.("[changeSelection] before: isInternalSelectionChange =", isInternalSelectionChange);
   const wasInternal = isInternalSelectionChange;
   isInternalSelectionChange = true;
-  debug?.('[changeSelection] set to true: isInternalSelectionChange =', isInternalSelectionChange);
+  debug?.("[changeSelection] set to true: isInternalSelectionChange =", isInternalSelectionChange);
   try {
     editor.selection = selection;
-    debug?.('[changeSelection] set selection:', selection.start.line, selection.start.character, '->', selection.end.line, selection.end.character);
+    debug?.(
+      "[changeSelection] set selection:",
+      selection.start.line,
+      selection.start.character,
+      "->",
+      selection.end.line,
+      selection.end.character
+    );
   } finally {
     isInternalSelectionChange = wasInternal;
-    debug?.('[changeSelection] restored: isInternalSelectionChange =', isInternalSelectionChange);
+    debug?.("[changeSelection] restored: isInternalSelectionChange =", isInternalSelectionChange);
   }
 }
 
 export function activate(context: vscode.ExtensionContext) {
   const isExtensionDevelopment = context.extensionMode === vscode.ExtensionMode.Development;
-  debug = (process.env.EASY_KILL_DEBUG === 'true' || isExtensionDevelopment)
-    ? console.log.bind(console)
-    : undefined;
+  debug = process.env.EASY_KILL_DEBUG === "true" || isExtensionDevelopment ? console.log.bind(console) : undefined;
 
-  debug?.('[Easy Kill] Activating extension');
-  debug?.('[Easy Kill] Extension mode:', context.extensionMode === 1 ? 'Production' : context.extensionMode === 2 ? 'Development' : 'Test');
+  debug?.("[Easy Kill] Activating extension");
+  debug?.(
+    "[Easy Kill] Extension mode:",
+    context.extensionMode === 1 ? "Production" : context.extensionMode === 2 ? "Development" : "Test"
+  );
 
   initializeThingBoundsTable();
 
@@ -104,9 +112,7 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand("easyKill.select", () => startEasyKill(true))
-  );
+  context.subscriptions.push(vscode.commands.registerCommand("easyKill.select", () => startEasyKill(true)));
 
   context.subscriptions.push(
     vscode.commands.registerCommand("easyKill.cancel", () => {
@@ -142,7 +148,14 @@ export function activate(context: vscode.ExtensionContext) {
     );
   }
 
-  const createMovementCommand = (thingType: ThingType, getPosition: (bounds: ThingBounds, editor: vscode.TextEditor, position: vscode.Position) => Promise<vscode.Position | null>) => {
+  const createMovementCommand = (
+    thingType: ThingType,
+    getPosition: (
+      bounds: ThingBounds,
+      editor: vscode.TextEditor,
+      position: vscode.Position
+    ) => Promise<vscode.Position | null>
+  ) => {
     return async (args?: { select?: boolean }) => {
       const editor = vscode.window.activeTextEditor;
       if (!editor) return;
@@ -161,48 +174,55 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("easyKill.forwardSubword",
-      createMovementCommand("subword", (bounds, editor, pos) => bounds.getNextEnd(editor, pos)))
+    vscode.commands.registerCommand(
+      "easyKill.forwardSubword",
+      createMovementCommand("subword", (bounds, editor, pos) => bounds.getNextEnd(editor, pos))
+    )
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("easyKill.backwardSubword",
-      createMovementCommand("subword", (bounds, editor, pos) => bounds.getPreviousBeginning(editor, pos)))
+    vscode.commands.registerCommand(
+      "easyKill.backwardSubword",
+      createMovementCommand("subword", (bounds, editor, pos) => bounds.getPreviousBeginning(editor, pos))
+    )
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("easyKill.forwardWord",
-      createMovementCommand("word", (bounds, editor, pos) => bounds.getNextEnd(editor, pos)))
+    vscode.commands.registerCommand(
+      "easyKill.forwardWord",
+      createMovementCommand("word", (bounds, editor, pos) => bounds.getNextEnd(editor, pos))
+    )
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("easyKill.backwardWord",
-      createMovementCommand("word", (bounds, editor, pos) => bounds.getPreviousBeginning(editor, pos)))
+    vscode.commands.registerCommand(
+      "easyKill.backwardWord",
+      createMovementCommand("word", (bounds, editor, pos) => bounds.getPreviousBeginning(editor, pos))
+    )
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("easyKill.forwardSentence",
-      createMovementCommand("sentence", (bounds, editor, pos) => bounds.getNextEnd(editor, pos)))
+    vscode.commands.registerCommand(
+      "easyKill.forwardSentence",
+      createMovementCommand("sentence", (bounds, editor, pos) => bounds.getNextEnd(editor, pos))
+    )
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("easyKill.backwardSentence",
-      createMovementCommand("sentence", (bounds, editor, pos) => bounds.getPreviousBeginning(editor, pos)))
+    vscode.commands.registerCommand(
+      "easyKill.backwardSentence",
+      createMovementCommand("sentence", (bounds, editor, pos) => bounds.getPreviousBeginning(editor, pos))
+    )
   );
-
 }
 
-export function nextWordEnd(
-  document: vscode.TextDocument,
-  position: vscode.Position
-): vscode.Position | null {
+export function nextWordEnd(document: vscode.TextDocument, position: vscode.Position): vscode.Position | null {
   let pos = position;
 
   while (true) {
     if (
       pos.line >= document.lineCount ||
-      (pos.line === document.lineCount - 1 &&
-        pos.character >= document.lineAt(pos.line).text.length)
+      (pos.line === document.lineCount - 1 && pos.character >= document.lineAt(pos.line).text.length)
     ) {
       return null;
     }
@@ -212,16 +232,14 @@ export function nextWordEnd(
       return range.end;
     }
 
-    pos = pos.character < document.lineAt(pos.line).text.length
-      ? pos.translate(0, 1)
-      : new vscode.Position(pos.line + 1, 0);
+    pos =
+      pos.character < document.lineAt(pos.line).text.length
+        ? pos.translate(0, 1)
+        : new vscode.Position(pos.line + 1, 0);
   }
 }
 
-export function previousWordStart(
-  document: vscode.TextDocument,
-  position: vscode.Position
-): vscode.Position | null {
+export function previousWordStart(document: vscode.TextDocument, position: vscode.Position): vscode.Position | null {
   let pos = position;
 
   while (true) {
@@ -229,9 +247,10 @@ export function previousWordStart(
       return null;
     }
 
-    pos = pos.character > 0
-      ? pos.translate(0, -1)
-      : new vscode.Position(pos.line - 1, document.lineAt(pos.line - 1).text.length);
+    pos =
+      pos.character > 0
+        ? pos.translate(0, -1)
+        : new vscode.Position(pos.line - 1, document.lineAt(pos.line - 1).text.length);
 
     const range = document.getWordRangeAtPosition(pos);
     if (range?.start.isBefore(position)) {
@@ -240,26 +259,17 @@ export function previousWordStart(
   }
 }
 
-export function forwardWordRange(
-  document: vscode.TextDocument,
-  position: vscode.Position
-): vscode.Range | null {
+export function forwardWordRange(document: vscode.TextDocument, position: vscode.Position): vscode.Range | null {
   const wordEnd = nextWordEnd(document, position);
   return (wordEnd && document.getWordRangeAtPosition(wordEnd.translate(0, -1))) ?? null;
 }
 
-export function backwardWordRange(
-  document: vscode.TextDocument,
-  position: vscode.Position
-): vscode.Range | null {
+export function backwardWordRange(document: vscode.TextDocument, position: vscode.Position): vscode.Range | null {
   const wordStart = previousWordStart(document, position);
   return (wordStart && document.getWordRangeAtPosition(wordStart)) ?? null;
 }
 
-async function saveSelection<T>(
-  editor: vscode.TextEditor,
-  fn: () => Promise<T>
-): Promise<T> {
+async function saveSelection<T>(editor: vscode.TextEditor, fn: () => Promise<T>): Promise<T> {
   const originalSelection = editor.selection;
   const wasInternal = isInternalSelectionChange;
   isInternalSelectionChange = true;
@@ -278,21 +288,25 @@ async function getRangeByForwardBackward(
 ): Promise<vscode.Range | null> {
   debug?.(`[getRangeByForwardBackward] position: ${position.line}:${position.character}`);
   const forwardEnd = await bounds.getNextEnd(editor, position);
-  debug?.(`[getRangeByForwardBackward] forwardEnd: ${forwardEnd ? `${forwardEnd.line}:${forwardEnd.character}` : 'null'}`);
+  debug?.(
+    `[getRangeByForwardBackward] forwardEnd: ${forwardEnd ? `${forwardEnd.line}:${forwardEnd.character}` : "null"}`
+  );
   if (!forwardEnd) {
     return null;
   }
 
   const backwardStart = await bounds.getPreviousBeginning(editor, forwardEnd);
-  debug?.(`[getRangeByForwardBackward] backwardStart: ${backwardStart ? `${backwardStart.line}:${backwardStart.character}` : 'null'}`);
+  debug?.(
+    `[getRangeByForwardBackward] backwardStart: ${backwardStart ? `${backwardStart.line}:${backwardStart.character}` : "null"}`
+  );
   if (!backwardStart) {
     return null;
   }
 
-  const result = backwardStart.isBeforeOrEqual(position)
-    ? new vscode.Range(backwardStart, forwardEnd)
-    : null;
-  debug?.(`[getRangeByForwardBackward] result: ${result ? `${result.start.line}:${result.start.character}-${result.end.line}:${result.end.character}` : 'null'}`);
+  const result = backwardStart.isBeforeOrEqual(position) ? new vscode.Range(backwardStart, forwardEnd) : null;
+  debug?.(
+    `[getRangeByForwardBackward] result: ${result ? `${result.start.line}:${result.start.character}-${result.end.line}:${result.end.character}` : "null"}`
+  );
   return result;
 }
 
@@ -380,15 +394,15 @@ function initializeThingBoundsTable() {
 
       debug?.(`[subwordBounds.getNextEnd] position: ${position.line}:${position.character}`);
       const wordRange = forwardWordRange(document, position);
-      debug?.(`[subwordBounds.getNextEnd] wordRange: ${wordRange ? `${wordRange.start.line}:${wordRange.start.character}-${wordRange.end.line}:${wordRange.end.character}` : 'null'}`);
+      debug?.(
+        `[subwordBounds.getNextEnd] wordRange: ${wordRange ? `${wordRange.start.line}:${wordRange.start.character}-${wordRange.end.line}:${wordRange.end.character}` : "null"}`
+      );
       if (!wordRange) {
         return null;
       }
 
       return saveSelection(editor, async () => {
-        const startPos = wordRange.start.isBeforeOrEqual(position)
-          ? position
-          : wordRange.start;
+        const startPos = wordRange.start.isBeforeOrEqual(position) ? position : wordRange.start;
         debug?.(`[subwordBounds.getNextEnd] startPos: ${startPos.line}:${startPos.character}`);
 
         editor.selection = new vscode.Selection(startPos, startPos);
@@ -401,15 +415,15 @@ function initializeThingBoundsTable() {
 
       debug?.(`[subwordBounds.getPreviousBeginning] position: ${position.line}:${position.character}`);
       const wordRange = backwardWordRange(document, position);
-      debug?.(`[subwordBounds.getPreviousBeginning] wordRange: ${wordRange ? `${wordRange.start.line}:${wordRange.start.character}-${wordRange.end.line}:${wordRange.end.character}` : 'null'}`);
+      debug?.(
+        `[subwordBounds.getPreviousBeginning] wordRange: ${wordRange ? `${wordRange.start.line}:${wordRange.start.character}-${wordRange.end.line}:${wordRange.end.character}` : "null"}`
+      );
       if (!wordRange) {
         return null;
       }
 
       return saveSelection(editor, async () => {
-        const startPos = position.isBeforeOrEqual(wordRange.end)
-          ? position
-          : wordRange.end;
+        const startPos = position.isBeforeOrEqual(wordRange.end) ? position : wordRange.end;
         debug?.(`[subwordBounds.getPreviousBeginning] startPos: ${startPos.line}:${startPos.character}`);
 
         editor.selection = new vscode.Selection(startPos, startPos);
@@ -505,7 +519,7 @@ function initializeThingBoundsTable() {
 
       try {
         const selectionRanges = await vscode.commands.executeCommand<vscode.SelectionRange[]>(
-          'vscode.executeSelectionRangeProvider',
+          "vscode.executeSelectionRangeProvider",
           uri,
           [position]
         );
@@ -523,8 +537,7 @@ function initializeThingBoundsTable() {
             currentRange = currentRange.parent;
           }
         }
-      } catch {
-      }
+      } catch {}
 
       return findEnclosingPair(document, position, ["(", "[", "{"], [")", "]", "}"]);
     },
@@ -534,7 +547,10 @@ function initializeThingBoundsTable() {
       if (!currentRange) return null;
 
       const searchPos = currentRange.end;
-      if (searchPos.line >= document.lineCount - 1 && searchPos.character >= document.lineAt(searchPos.line).range.end.character) {
+      if (
+        searchPos.line >= document.lineCount - 1 &&
+        searchPos.character >= document.lineAt(searchPos.line).range.end.character
+      ) {
         return null;
       }
 
@@ -582,7 +598,10 @@ function initializeThingBoundsTable() {
       if (!currentRange) return null;
 
       const searchPos = currentRange.end;
-      if (searchPos.line >= document.lineCount - 1 && searchPos.character >= document.lineAt(searchPos.line).range.end.character) {
+      if (
+        searchPos.line >= document.lineCount - 1 &&
+        searchPos.character >= document.lineAt(searchPos.line).range.end.character
+      ) {
         return null;
       }
 
@@ -655,10 +674,7 @@ function initializeThingBoundsTable() {
       const { document } = editor;
       const uri = document.uri;
 
-      const tokens = await vscode.commands.executeCommand<any>(
-        'vscode.provideDocumentSemanticTokens',
-        uri
-      );
+      const tokens = await vscode.commands.executeCommand<any>("vscode.provideDocumentSemanticTokens", uri);
 
       if (tokens?.data) {
         const offset = document.offsetAt(position);
@@ -682,15 +698,12 @@ function initializeThingBoundsTable() {
           const tokenEnd = tokenStart + length;
 
           if (offset >= tokenStart && offset < tokenEnd && tokenType === 0) {
-            return new vscode.Range(
-              document.positionAt(tokenStart),
-              document.positionAt(tokenEnd)
-            );
+            return new vscode.Range(document.positionAt(tokenStart), document.positionAt(tokenEnd));
           }
         }
       }
 
-      const quotes = ['"', "'", '`'];
+      const quotes = ['"', "'", "`"];
       return findEnclosingString(document, position, quotes, false);
     },
     async getNextEnd(editor, position) {
@@ -731,7 +744,10 @@ function initializeThingBoundsTable() {
       if (!currentRange) return null;
 
       const searchPos = currentRange.end;
-      if (searchPos.line >= document.lineCount - 1 && searchPos.character >= document.lineAt(searchPos.line).range.end.character) {
+      if (
+        searchPos.line >= document.lineCount - 1 &&
+        searchPos.character >= document.lineAt(searchPos.line).range.end.character
+      ) {
         return null;
       }
 
@@ -793,15 +809,14 @@ function initializeThingBoundsTable() {
       const text = line.text;
       const firstNonWhitespace = text.search(/\S/);
 
-      const indentPos = firstNonWhitespace >= 0
-        ? new vscode.Position(position.line, firstNonWhitespace)
-        : line.range.start;
+      const indentPos =
+        firstNonWhitespace >= 0 ? new vscode.Position(position.line, firstNonWhitespace) : line.range.start;
 
       if (position.character <= indentPos.character) {
         return new vscode.Range(line.range.start, position);
       }
 
-      if (currentSelection && currentSelection.type === 'backward-line-edge') {
+      if (currentSelection && currentSelection.type === "backward-line-edge") {
         if (currentSelection.range.start.isEqual(indentPos) && !indentPos.isEqual(line.range.start)) {
           return new vscode.Range(line.range.start, position);
         }
@@ -830,7 +845,13 @@ function initializeThingBoundsTable() {
     },
   };
 
-  const findCharInText = (text: string, char: string, startOffset: number, forward: boolean, inclusive: boolean): { start: number; end: number } | null => {
+  const findCharInText = (
+    text: string,
+    char: string,
+    startOffset: number,
+    forward: boolean,
+    inclusive: boolean
+  ): { start: number; end: number } | null => {
     let targetOffset = -1;
 
     if (forward) {
@@ -874,10 +895,7 @@ function initializeThingBoundsTable() {
       const result = findCharInText(text, lastCharSearchChar, offset, forward, inclusive);
       if (!result) return null;
 
-      return new vscode.Range(
-        document.positionAt(result.start),
-        document.positionAt(result.end)
-      );
+      return new vscode.Range(document.positionAt(result.start), document.positionAt(result.end));
     },
     async getNextEnd(editor, position) {
       if (!lastCharSearchChar) return null;
@@ -916,10 +934,14 @@ function initializeThingBoundsTable() {
     async instantCopy(editor, position) {
       const char = await new Promise<string | null>((resolve) => {
         const type = forward
-          ? (inclusive ? 'string-to-char-forward' : 'string-up-to-char-forward')
-          : (inclusive ? 'string-to-char-backward' : 'string-up-to-char-backward');
+          ? inclusive
+            ? "string-to-char-forward"
+            : "string-up-to-char-forward"
+          : inclusive
+            ? "string-to-char-backward"
+            : "string-up-to-char-backward";
         awaitingCharInput = { type: type as ThingType, resolve };
-        vscode.window.setStatusBarMessage(`$(search) ${forward ? 'Find' : 'Reverse find'} character...`, 5000);
+        vscode.window.setStatusBarMessage(`$(search) ${forward ? "Find" : "Reverse find"} character...`, 5000);
       });
 
       awaitingCharInput = null;
@@ -935,10 +957,7 @@ function initializeThingBoundsTable() {
       const result = findCharInText(text, char, offset, forward, inclusive);
       if (!result) return null;
 
-      const range = new vscode.Range(
-        document.positionAt(result.start),
-        document.positionAt(result.end)
-      );
+      const range = new vscode.Range(document.positionAt(result.start), document.positionAt(result.end));
 
       return document.getText(range);
     },
@@ -987,7 +1006,7 @@ function initializeThingBoundsTable() {
     async getRange(editor, position) {
       const { document } = editor;
       const links = await vscode.commands.executeCommand<vscode.DocumentLink[]>(
-        'vscode.executeLinkProvider',
+        "vscode.executeLinkProvider",
         document.uri
       );
 
@@ -1020,11 +1039,11 @@ function initializeThingBoundsTable() {
 
       if (!/^\w+:\/\//.test(text)) {
         if (/^www\./.test(text)) {
-          text = 'https://' + text;
+          text = "https://" + text;
         } else if (/^ftp\./.test(text)) {
-          text = 'ftp://' + text;
+          text = "ftp://" + text;
         } else if (/@/.test(text)) {
-          text = 'mailto:' + text;
+          text = "mailto:" + text;
         }
       }
 
@@ -1043,7 +1062,9 @@ function initializeThingBoundsTable() {
   thingBoundsTable["filename"] = createPatternBounds([/[./~][\w\-./]+/g, /[A-Z]:[\w\-\\/.]+/g]);
   thingBoundsTable["buffer-file-name"] = bufferFileNameBounds;
   thingBoundsTable["url"] = urlBounds;
-  thingBoundsTable["email"] = createPatternBounds([/[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+/g]);
+  thingBoundsTable["email"] = createPatternBounds([
+    /[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+/g,
+  ]);
   thingBoundsTable["backward-line-edge"] = backwardLineEdgeBounds;
   thingBoundsTable["forward-line-edge"] = forwardLineEdgeBounds;
   thingBoundsTable["string-to-char-forward"] = createCharSearchBounds(true, true);
@@ -1066,7 +1087,7 @@ async function startEasyKill(selectMode: boolean) {
   initialCursorPosition = position;
 
   isActive = true;
-  vscode.commands.executeCommand('setContext', 'easyKillActive', true);
+  vscode.commands.executeCommand("setContext", "easyKillActive", true);
   currentSelection = null;
   editor.selection = new vscode.Selection(position, position);
 
@@ -1086,7 +1107,7 @@ async function startEasyKill(selectMode: boolean) {
 
   if (!selection) {
     isActive = false;
-    vscode.commands.executeCommand('setContext', 'easyKillActive', false);
+    vscode.commands.executeCommand("setContext", "easyKillActive", false);
     return;
   }
 
@@ -1115,7 +1136,7 @@ async function startEasyKillWithType(selectMode: boolean, type: ThingType) {
   const bounds = thingBoundsTable[type];
   if (bounds?.instantCopy) {
     isActive = true;
-    vscode.commands.executeCommand('setContext', 'easyKillActive', true);
+    vscode.commands.executeCommand("setContext", "easyKillActive", true);
     let tempDisposable: vscode.Disposable | null = null;
 
     tempDisposable = vscode.commands.registerCommand("type", async (args) => {
@@ -1132,7 +1153,7 @@ async function startEasyKillWithType(selectMode: boolean, type: ThingType) {
 
     if (!text) {
       isActive = false;
-      vscode.commands.executeCommand('setContext', 'easyKillActive', false);
+      vscode.commands.executeCommand("setContext", "easyKillActive", false);
       vscode.window.showInformationMessage(`No ${type}`);
       return;
     }
@@ -1140,7 +1161,7 @@ async function startEasyKillWithType(selectMode: boolean, type: ThingType) {
     const range = await bounds.getRange(editor, position);
     if (!range) {
       isActive = false;
-      vscode.commands.executeCommand('setContext', 'easyKillActive', false);
+      vscode.commands.executeCommand("setContext", "easyKillActive", false);
       copyToClipboard(text);
       vscode.window.showInformationMessage(`Copied ${type}`);
       return;
@@ -1148,7 +1169,7 @@ async function startEasyKillWithType(selectMode: boolean, type: ThingType) {
 
     if (range.isEmpty) {
       isActive = false;
-      vscode.commands.executeCommand('setContext', 'easyKillActive', false);
+      vscode.commands.executeCommand("setContext", "easyKillActive", false);
       vscode.window.showInformationMessage(`No ${type}`);
       return;
     }
@@ -1172,7 +1193,7 @@ async function startEasyKillWithType(selectMode: boolean, type: ThingType) {
   }
 
   isActive = true;
-  vscode.commands.executeCommand('setContext', 'easyKillActive', true);
+  vscode.commands.executeCommand("setContext", "easyKillActive", true);
   const text = editor.document.getText(range);
   const selection: Selection = { type, range, initialRange: range, text, count: 1 };
 
@@ -1186,7 +1207,11 @@ async function startEasyKillWithType(selectMode: boolean, type: ThingType) {
   updateSelection(editor, selection, selectMode);
 }
 
-async function getThingRange(editor: vscode.TextEditor, position: vscode.Position, thing: ThingType): Promise<vscode.Range | null> {
+async function getThingRange(
+  editor: vscode.TextEditor,
+  position: vscode.Position,
+  thing: ThingType
+): Promise<vscode.Range | null> {
   const bounds = thingBoundsTable[thing];
   if (!bounds) return null;
   return bounds.getRange(editor, position);
@@ -1233,10 +1258,7 @@ function findEnclosingPair(
       depth++;
     } else if (char === closeChar) {
       if (depth === 0) {
-        return new vscode.Range(
-          document.positionAt(openOffset),
-          document.positionAt(i + 1)
-        );
+        return new vscode.Range(document.positionAt(openOffset), document.positionAt(i + 1));
       }
       depth--;
     }
@@ -1268,15 +1290,9 @@ function findEnclosingString(
     for (let i = openOffset + 1; i < text.length; i++) {
       if (text[i] === quote && text[i - 1] !== "\\") {
         if (includeQuotes) {
-          return new vscode.Range(
-            document.positionAt(openOffset),
-            document.positionAt(i + 1)
-          );
+          return new vscode.Range(document.positionAt(openOffset), document.positionAt(i + 1));
         } else {
-          return new vscode.Range(
-            document.positionAt(openOffset + 1),
-            document.positionAt(i)
-          );
+          return new vscode.Range(document.positionAt(openOffset + 1), document.positionAt(i));
         }
       }
     }
@@ -1299,7 +1315,6 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
   const cleanup = (resetCursor: boolean = false) => {
     if (!isActive) return;
 
-
     awaitingCharInput?.resolve(null);
     awaitingCharInput = null;
 
@@ -1309,7 +1324,7 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
 
     statusBarItem.hide();
     isActive = false;
-    vscode.commands.executeCommand('setContext', 'easyKillActive', false);
+    vscode.commands.executeCommand("setContext", "easyKillActive", false);
     isSelectMode = false;
     currentSelection = null;
     initialCursorPosition = null;
@@ -1391,17 +1406,24 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
   });
 
   globalSelectionDisposable = vscode.window.onDidChangeTextEditorSelection((e) => {
-    debug?.('[onDidChangeTextEditorSelection] isInternalSelectionChange:', isInternalSelectionChange, 'isActive:', isActive, 'kind:', e.kind);
+    debug?.(
+      "[onDidChangeTextEditorSelection] isInternalSelectionChange:",
+      isInternalSelectionChange,
+      "isActive:",
+      isActive,
+      "kind:",
+      e.kind
+    );
     if (isInternalSelectionChange) {
-      debug?.('[onDidChangeTextEditorSelection] ignoring internal change');
+      debug?.("[onDidChangeTextEditorSelection] ignoring internal change");
       return;
     }
     if (e.kind === undefined) {
-      debug?.('[onDidChangeTextEditorSelection] ignoring undefined kind');
+      debug?.("[onDidChangeTextEditorSelection] ignoring undefined kind");
       return;
     }
     if (isActive && e.textEditor === editor && e.kind !== vscode.TextEditorSelectionChangeKind.Command) {
-      debug?.('[onDidChangeTextEditorSelection] calling cleanup');
+      debug?.("[onDidChangeTextEditorSelection] calling cleanup");
       cleanup(false);
     }
   });
@@ -1414,7 +1436,7 @@ async function changeSelectionType(editor: vscode.TextEditor, type: ThingType) {
 
   const bounds = thingBoundsTable[type];
   if (bounds?.instantCopy) {
-    const isCharSearch = type.startsWith('string-to-char-') || type.startsWith('string-up-to-char-');
+    const isCharSearch = type.startsWith("string-to-char-") || type.startsWith("string-up-to-char-");
 
     if (!isCharSearch && isSelectMode) {
       vscode.window.showInformationMessage("Not supported in Easy Kill: Select");
@@ -1466,7 +1488,7 @@ async function expandSelection(editor: vscode.TextEditor, delta: number) {
   if (!currentSelection) return;
 
   const newCount = currentSelection.count + delta;
-  debug?.('[expandSelection] current count:', currentSelection.count, 'delta:', delta, 'newCount:', newCount);
+  debug?.("[expandSelection] current count:", currentSelection.count, "delta:", delta, "newCount:", newCount);
   await updateSelectionWithCount(editor, newCount);
 }
 
@@ -1477,27 +1499,35 @@ async function shrinkSelection(editor: vscode.TextEditor, delta: number) {
   await updateSelectionWithCount(editor, newCount);
 }
 
-async function getNextEnd(editor: vscode.TextEditor, position: vscode.Position, type: ThingType): Promise<vscode.Position | null> {
+async function getNextEnd(
+  editor: vscode.TextEditor,
+  position: vscode.Position,
+  type: ThingType
+): Promise<vscode.Position | null> {
   const bounds = thingBoundsTable[type];
   if (!bounds) return null;
   return bounds.getNextEnd(editor, position);
 }
 
-async function getPreviousBeginning(editor: vscode.TextEditor, position: vscode.Position, type: ThingType): Promise<vscode.Position | null> {
+async function getPreviousBeginning(
+  editor: vscode.TextEditor,
+  position: vscode.Position,
+  type: ThingType
+): Promise<vscode.Position | null> {
   const bounds = thingBoundsTable[type];
   if (!bounds) return null;
   return bounds.getPreviousBeginning(editor, position);
 }
 
 async function updateSelectionWithCount(editor: vscode.TextEditor, newCount: number) {
-  debug?.('[updateSelectionWithCount] called with newCount:', newCount);
+  debug?.("[updateSelectionWithCount] called with newCount:", newCount);
   if (!currentSelection) return;
 
   const { document } = editor;
   const { type, initialRange } = currentSelection;
-  debug?.('[updateSelectionWithCount] currentSelection.count:', currentSelection.count, 'type:', type);
+  debug?.("[updateSelectionWithCount] currentSelection.count:", currentSelection.count, "type:", type);
 
-  const isBackwardType = type === 'string-to-char-backward' || type === 'string-up-to-char-backward';
+  const isBackwardType = type === "string-to-char-backward" || type === "string-up-to-char-backward";
 
   let newRange: vscode.Range | null = null;
 
@@ -1552,9 +1582,16 @@ async function updateSelectionWithCount(editor: vscode.TextEditor, newCount: num
   }
 
   if (newRange) {
-    debug?.('[updateSelectionWithCount] newRange:', newRange.start.line, newRange.start.character, '->', newRange.end.line, newRange.end.character);
+    debug?.(
+      "[updateSelectionWithCount] newRange:",
+      newRange.start.line,
+      newRange.start.character,
+      "->",
+      newRange.end.line,
+      newRange.end.character
+    );
     const text = document.getText(newRange);
-    debug?.('[updateSelectionWithCount] text:', JSON.stringify(text));
+    debug?.("[updateSelectionWithCount] text:", JSON.stringify(text));
     currentSelection = {
       ...currentSelection,
       range: newRange,
@@ -1579,7 +1616,7 @@ async function copyToClipboard(text: string) {
   if (!isSelectMode) {
     await vscode.env.clipboard.writeText(text);
     if (text !== lastCopiedText) {
-      vscode.window.setStatusBarMessage(`$(clippy) Copied: ${text.slice(0, 50)}${text.length > 50 ? '...' : ''}`, 2000);
+      vscode.window.setStatusBarMessage(`$(clippy) Copied: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`, 2000);
       lastCopiedText = text;
     }
   }
