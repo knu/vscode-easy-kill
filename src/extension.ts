@@ -609,7 +609,7 @@ function initializeThingBoundsTable() {
       return null;
     },
     async instantCopy(editor, position) {
-      return editor.document.uri.fsPath ?? null;
+      return editor.document.uri.fsPath || null;
     },
   };
 
@@ -1138,7 +1138,15 @@ async function startEasyKillWithType(selectMode: boolean, type: ThingType) {
     }
 
     const range = await bounds.getRange(editor, position);
-    if (!range || range.isEmpty) {
+    if (!range) {
+      isActive = false;
+      vscode.commands.executeCommand('setContext', 'easyKillActive', false);
+      copyToClipboard(text);
+      vscode.window.showInformationMessage(`Copied ${type}`);
+      return;
+    }
+
+    if (range.isEmpty) {
       isActive = false;
       vscode.commands.executeCommand('setContext', 'easyKillActive', false);
       vscode.window.showInformationMessage(`No ${type}`);
@@ -1421,7 +1429,8 @@ async function changeSelectionType(editor: vscode.TextEditor, type: ThingType) {
 
     const range = await bounds.getRange(editor, initialCursorPosition);
     if (!range) {
-      vscode.window.showInformationMessage(`No ${type}`);
+      copyToClipboard(text);
+      vscode.window.showInformationMessage(`Copied ${type}`);
       return;
     }
 
