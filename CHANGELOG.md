@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2] - 2025-12-25
+
+### Fixed
+
+- Fixed character search command repetition to work correctly
+- Fixed forward-line-edge (^) repetition behavior
+
 ## [0.1.1] - 2025-12-24
 
 ### Fixed
