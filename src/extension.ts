@@ -529,8 +529,6 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
 async function changeSelectionType(editor: vscode.TextEditor, type: ThingType) {
   if (!currentSelection || !initialCursorPosition) return;
 
-  editor.selection = new vscode.Selection(initialCursorPosition, initialCursorPosition);
-
   const bounds = thingBoundsTable[type];
 
   if (bounds.instantCopy) {
@@ -568,8 +566,12 @@ async function changeSelectionType(editor: vscode.TextEditor, type: ThingType) {
 
   debug("[changeSelectionType] from:", currentSelection.type, "to:", type, "count:", currentSelection.count);
   const newSelection = await bounds.getNewSelection(editor, {
-    ...currentSelection,
-    initialRange: new vscode.Range(initialCursorPosition, initialCursorPosition),
+    type,
+    range: currentSelection.range,
+    initialRange: currentSelection.initialRange,
+    text: currentSelection.text,
+    count: 0,
+    arg: currentSelection.arg,
   });
   if (newSelection) {
     currentSelection = newSelection;
