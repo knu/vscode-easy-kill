@@ -2,6 +2,7 @@
 *.vsix
 .gitignore
 .vscode
+.tmp
 node_modules
 src
 tsconfig.json

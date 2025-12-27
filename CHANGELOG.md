@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.1] - 2025-12-27
+
+- Republished to exclude unnecessary files
+
 ## [0.2.0] - 2025-12-27
 
 ### Added
