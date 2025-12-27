@@ -2,7 +2,14 @@
 *.vsix
 .gitignore
 .vscode
+.vscode-test.js
 .tmp
+.github
+.node-version
+.prettierignore
+eslint.config.mjs
 node_modules
 src
 tsconfig.json
+out/**/*.test.js
+out/**/*.test.js.map
