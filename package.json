@@ -99,6 +99,19 @@
           "items": {
             "type": "string"
           }
+        },
+        "easyKill.unmappedKeyBehavior": {
+          "type": "string",
+          "enum": [
+            "overwrite",
+            "error"
+          ],
+          "default": "error",
+          "description": "Behavior when an unmapped key (not bound to any thing type) is pressed during selection. 'overwrite': Replace the selection with the typed character. 'error': Show an error message and keep the selection.",
+          "enumDescriptions": [
+            "Replace the selection with the typed character",
+            "Show error message and keep the selection"
+          ]
         }
       }
     },

@@ -504,9 +504,16 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
         const newCount = currentSelection.count + digit;
         await updateSelectionWithCount(editor, newCount);
         return;
-      default:
-        cleanup(true);
-        return vscode.commands.executeCommand("default:type", args);
+      default: {
+        const unmappedBehavior = config.get<string>("unmappedKeyBehavior", "error");
+        if (unmappedBehavior === "error") {
+          vscode.window.showInformationMessage(`No thing type bound to key: ${char}`);
+          return;
+        } else {
+          cleanup(false);
+          return vscode.commands.executeCommand("default:type", args);
+        }
+      }
     }
   });
 
