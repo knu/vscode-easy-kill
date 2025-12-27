@@ -473,6 +473,10 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
     if (char in typeMap) {
       const value = typeMap[char];
 
+      if (!value) {
+        return;
+      }
+
       switch (value) {
         case "accept":
           cleanup(false);
