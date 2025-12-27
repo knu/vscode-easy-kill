@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.0] - 2025-12-27
+
+### Added
+
+- Special actions in `easyKill.keyBindings`: `accept`, `cancel`, `expand`, `shrink`, `reset`, `cycle`, `expand-by-N` (N: 1-9)
+- `easyKill.unmappedKeyBehavior` setting to control unmapped key behavior (error/overwrite)
+- Enter key support to confirm selection and exit
+
+### Changed
+
+- All interactive key bindings are now customizable via `easyKill.keyBindings` setting
+- Unmapped keys now show error message by default instead of canceling selection (customizable)
+- `_` (underscore) is now unbound by default
+
+### Fixed
+
+- Selection type switching now preserves initial range instead of resetting to cursor position
+
 ## [0.1.2] - 2025-12-25
 
 ### Fixed
