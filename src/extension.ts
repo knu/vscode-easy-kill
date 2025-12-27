@@ -15,6 +15,10 @@ import { debug } from "./debug";
 
 const thingBoundsTable: Record<ThingType, ThingBounds> = {} as Record<ThingType, ThingBounds>;
 
+function isThingType(value: string): value is ThingType {
+  return value in thingBoundsTable;
+}
+
 let currentSelection: Selection | null = null;
 let isActive = false;
 let isSelectMode = false;
@@ -464,56 +468,80 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
     }
 
     const config = vscode.workspace.getConfiguration("easyKill");
-    const typeMap: Record<string, ThingType> = config.get("keyBindings", {});
+    const typeMap: Record<string, string> = config.get("keyBindings", {});
 
     if (char in typeMap) {
-      const targetType = typeMap[char];
-      if (currentSelection.type === targetType && currentSelection.count > 0) {
-        await expandSelection(editor, 1);
-      } else {
-        await changeSelectionType(editor, targetType);
+      const value = typeMap[char];
+
+      switch (value) {
+        case "accept":
+          cleanup(false);
+          return;
+        case "cancel":
+          cleanup(true);
+          return;
+        case "expand":
+          await expandSelection(editor, 1);
+          return;
+        case "shrink":
+          await shrinkSelection(editor, 1);
+          return;
+        case "reset":
+          await updateSelectionWithCount(editor, 1);
+          return;
+        case "cycle":
+          await cycleSelection(editor);
+          return;
+        case "expand-by-1":
+          await expandSelection(editor, 1);
+          return;
+        case "expand-by-2":
+          await expandSelection(editor, 2);
+          return;
+        case "expand-by-3":
+          await expandSelection(editor, 3);
+          return;
+        case "expand-by-4":
+          await expandSelection(editor, 4);
+          return;
+        case "expand-by-5":
+          await expandSelection(editor, 5);
+          return;
+        case "expand-by-6":
+          await expandSelection(editor, 6);
+          return;
+        case "expand-by-7":
+          await expandSelection(editor, 7);
+          return;
+        case "expand-by-8":
+          await expandSelection(editor, 8);
+          return;
+        case "expand-by-9":
+          await expandSelection(editor, 9);
+          return;
+        default:
+          if (isThingType(value)) {
+            if (currentSelection.type === value && currentSelection.count > 0) {
+              await expandSelection(editor, 1);
+            } else {
+              await changeSelectionType(editor, value);
+            }
+          } else {
+            vscode.window.showInformationMessage(`Unknown command or type: ${value}`);
+          }
+          return;
       }
-      return;
     }
 
-    switch (char) {
-      case "+":
-      case "=":
-        await expandSelection(editor, 1);
-        return;
-      case "-":
-      case "_":
-        await shrinkSelection(editor, 1);
-        return;
-      case " ":
-        await cycleSelection(editor);
-        return;
-      case "0":
-        await updateSelectionWithCount(editor, 1);
-        return;
-      case "1":
-      case "2":
-      case "3":
-      case "4":
-      case "5":
-      case "6":
-      case "7":
-      case "8":
-      case "9":
-        const digit = parseInt(char, 10);
-        const newCount = currentSelection.count + digit;
-        await updateSelectionWithCount(editor, newCount);
-        return;
-      default: {
-        const unmappedBehavior = config.get<string>("unmappedKeyBehavior", "error");
-        if (unmappedBehavior === "error") {
-          vscode.window.showInformationMessage(`No thing type bound to key: ${char}`);
-          return;
-        } else {
-          cleanup(false);
-          return vscode.commands.executeCommand("default:type", args);
-        }
-      }
+    const unmappedBehavior = config.get<string>("unmappedKeyBehavior", "error");
+    switch (unmappedBehavior) {
+      case "error":
+        vscode.window.showInformationMessage(`No thing type bound to key: ${char}`);
+        break;
+      default:
+        cleanup(false);
+        await vscode.commands.executeCommand("default:type", args);
+        break;
     }
   });
 

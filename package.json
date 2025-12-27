@@ -37,6 +37,22 @@
         "easyKill.keyBindings": {
           "type": "object",
           "default": {
+            "\n": "accept",
+            "\r": "accept",
+            "+": "expand",
+            "=": "expand",
+            "-": "shrink",
+            " ": "cycle",
+            "0": "reset",
+            "1": "expand-by-1",
+            "2": "expand-by-2",
+            "3": "expand-by-3",
+            "4": "expand-by-4",
+            "5": "expand-by-5",
+            "6": "expand-by-6",
+            "7": "expand-by-7",
+            "8": "expand-by-8",
+            "9": "expand-by-9",
             "w": "subword",
             "W": "word",
             "s": "word",
@@ -69,7 +85,7 @@
             "F": "string-to-char-backward",
             "T": "string-up-to-char-backward"
           },
-          "description": "Key to region type mapping.",
+          "description": "Key to region type or action mapping. Supported actions: 'accept' (confirm selection and exit), 'cancel' (cancel and restore cursor position), 'expand' (expand selection by 1), 'shrink' (shrink selection by 1), 'reset' (reset count to 1), 'expand-by-N' (expand by N, where N is 1-9), 'cycle' (cycle through thing types).",
           "additionalProperties": {
             "type": "string"
           }

@@ -34,13 +34,16 @@ Note: Movement commands support selection when invoked with shift key.
 
 After triggering a command, you can interactively adjust the selection:
 
-- **Confirm** (<kbd>Enter</kbd>) - Confirm current selection
-- **Expand** (<kbd>+</kbd>/<kbd>=</kbd>) - Expand selection
-- **Shrink** (<kbd>-</kbd>/<kbd>\_</kbd>) - Shrink selection
+- **Confirm** (<kbd>Enter</kbd>) - Confirm selection and exit
+- **Cancel** (<kbd>Escape</kbd>/<kbd>Ctrl</kbd>+<kbd>G</kbd>) - Cancel and restore cursor position
+- **Expand** (<kbd>+</kbd>/<kbd>=</kbd>) - Expand selection by 1
+- **Shrink** (<kbd>-</kbd>) - Shrink selection by 1
 - **Cycle** (<kbd>Space</kbd>) - Cycle through selection types
 - **Add to Count** (<kbd>1</kbd>-<kbd>9</kbd>) - Add N to current count (e.g., pressing <kbd>4</kbd> when count is 1 expands to 5 instances; pressing <kbd>4</kbd> when count is -1 expands to 3 instances)
 - **Reset** (<kbd>0</kbd>) - Reset to initial size (count = 1)
 - **Change Type** (letter keys) - Switch to specific selection type (see Selection Types below)
+
+All key bindings above (except Cancel) are customizable via the `easyKill.keyBindings` setting.  To customize Cancel (<kbd>Escape</kbd>/<kbd>Ctrl</kbd>+<kbd>G</kbd>), use VS Code's Keyboard Shortcuts settings for the `easyKill.cancel` command.
 
 ### Selection Types
 
