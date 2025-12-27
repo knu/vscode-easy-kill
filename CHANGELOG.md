@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2] - 2025-12-27
+
+### Added
+
+- Dropdown selection for key binding values in settings UI
+- Support for unbinding keys with empty string or null
+
 ## [0.2.1] - 2025-12-27
 
 - Republished to exclude unnecessary files
