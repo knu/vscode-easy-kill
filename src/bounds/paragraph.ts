@@ -24,7 +24,7 @@ export class ParagraphBounds extends ThingBoundsBase {
     }
 
     const range = new vscode.Range(prevBeginning, nextEnd);
-    if (range.contains(position) || range.start.isEqual(position)) {
+    if (position.isAfterOrEqual(range.start)) {
       return range;
     }
 

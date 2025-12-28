@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { nextWordEnd, previousWordStart, forwardWordRange, backwardWordRange } from "./word";
+import { nextWordEnd, previousWordStart } from "./word";
 import { MockTextDocument, pos } from "../test-helpers";
 
 suite("Word Navigation Tests", () => {
@@ -90,8 +90,10 @@ suite("Word Navigation Tests", () => {
   suite("forwardWordRange", () => {
     test("gets current word range", () => {
       const doc = new MockTextDocument("fooBar baz");
-      const fromStart = forwardWordRange(doc, pos(0, 0));
-      const fromMiddle = forwardWordRange(doc, pos(0, 3));
+      const wordEnd1 = nextWordEnd(doc, pos(0, 0));
+      const fromStart = wordEnd1 && doc.getWordRangeAtPosition(wordEnd1);
+      const wordEnd2 = nextWordEnd(doc, pos(0, 3));
+      const fromMiddle = wordEnd2 && doc.getWordRangeAtPosition(wordEnd2);
 
       assert.ok(fromStart);
       assert.strictEqual(doc.getText(fromStart), "fooBar");
@@ -101,28 +103,34 @@ suite("Word Navigation Tests", () => {
 
     test("returns null at end of word", () => {
       const doc = new MockTextDocument("foo");
-      assert.strictEqual(forwardWordRange(doc, pos(0, 3)), null);
+      const wordEnd = nextWordEnd(doc, pos(0, 3));
+      const range = wordEnd && doc.getWordRangeAtPosition(wordEnd);
+      assert.strictEqual(range, null);
     });
   });
 
   suite("backwardWordRange", () => {
     test("gets previous word range", () => {
       const doc = new MockTextDocument("foo bar");
-      const result = backwardWordRange(doc, pos(0, 4));
+      const wordStart = previousWordStart(doc, pos(0, 4));
+      const result = wordStart && doc.getWordRangeAtPosition(wordStart);
       assert.ok(result);
       assert.strictEqual(doc.getText(result), "foo");
     });
 
     test("gets current word range from end", () => {
       const doc = new MockTextDocument("foo bar");
-      const result = backwardWordRange(doc, pos(0, 7));
+      const wordStart = previousWordStart(doc, pos(0, 7));
+      const result = wordStart && doc.getWordRangeAtPosition(wordStart);
       assert.ok(result);
       assert.strictEqual(doc.getText(result), "bar");
     });
 
     test("returns null at start of document", () => {
       const doc = new MockTextDocument("foo");
-      assert.strictEqual(backwardWordRange(doc, pos(0, 0)), null);
+      const wordStart = previousWordStart(doc, pos(0, 0));
+      const range = wordStart && doc.getWordRangeAtPosition(wordStart);
+      assert.strictEqual(range, null);
     });
   });
 
@@ -130,8 +138,10 @@ suite("Word Navigation Tests", () => {
     test("forward and backward symmetry", () => {
       const doc = new MockTextDocument("fooBar");
 
-      const forward = forwardWordRange(doc, pos(0, 0));
-      const backward = backwardWordRange(doc, pos(0, 6));
+      const wordEnd = nextWordEnd(doc, pos(0, 0));
+      const forward = wordEnd && doc.getWordRangeAtPosition(wordEnd);
+      const wordStart = previousWordStart(doc, pos(0, 6));
+      const backward = wordStart && doc.getWordRangeAtPosition(wordStart);
 
       assert.ok(forward);
       assert.ok(backward);

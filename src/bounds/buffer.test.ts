@@ -56,9 +56,8 @@ suite("Buffer Bounds Tests", () => {
       const initialSelection: Selection = {
         type: "buffer-before",
         range: new vscode.Range(pos(1, 7), pos(1, 7)),
-        initialRange: new vscode.Range(pos(1, 7), pos(1, 7)),
+        initialPosition: pos(1, 7),
         text: "",
-        count: 0,
       };
 
       const selection = await bufferBeforeBounds.getNewSelection(editor, initialSelection);
@@ -74,9 +73,8 @@ suite("Buffer Bounds Tests", () => {
       const initialSelection: Selection = {
         type: "buffer-before",
         range: new vscode.Range(pos(0, 0), pos(0, 0)),
-        initialRange: new vscode.Range(pos(0, 0), pos(0, 0)),
+        initialPosition: pos(0, 0),
         text: "",
-        count: 0,
       };
 
       const selection = await bufferBeforeBounds.getNewSelection(editor, initialSelection);
@@ -92,9 +90,8 @@ suite("Buffer Bounds Tests", () => {
       const initialSelection: Selection = {
         type: "buffer-before",
         range: new vscode.Range(pos(1, 6), pos(1, 6)),
-        initialRange: new vscode.Range(pos(1, 6), pos(1, 6)),
+        initialPosition: pos(1, 6),
         text: "",
-        count: 0,
       };
 
       const selection = await bufferBeforeBounds.getNewSelection(editor, initialSelection);

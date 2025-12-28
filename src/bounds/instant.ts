@@ -12,6 +12,12 @@ export const bufferFileNameBounds: ThingBounds = {
   async getPreviousStart(editor: vscode.TextEditor, position: vscode.Position, arg?: string) {
     return null;
   },
+  async getNextStart(editor: vscode.TextEditor, position: vscode.Position, arg?: string) {
+    return null;
+  },
+  async getPreviousEnd(editor: vscode.TextEditor, position: vscode.Position, arg?: string) {
+    return null;
+  },
   async instantCopy(editor: vscode.TextEditor, position: vscode.Position) {
     return editor.document.uri.fsPath || null;
   },
@@ -26,6 +32,12 @@ export const defunNameBounds: ThingBounds = {
     return null;
   },
   async getPreviousStart(editor: vscode.TextEditor, position: vscode.Position, arg?: string) {
+    return null;
+  },
+  async getNextStart(editor: vscode.TextEditor, position: vscode.Position, arg?: string) {
+    return null;
+  },
+  async getPreviousEnd(editor: vscode.TextEditor, position: vscode.Position, arg?: string) {
     return null;
   },
   async instantCopy(editor: vscode.TextEditor, position: vscode.Position) {

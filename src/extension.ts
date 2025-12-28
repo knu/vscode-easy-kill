@@ -278,9 +278,8 @@ async function tryInstantCopy(
   const initialSelection: Selection = {
     type,
     range: new vscode.Range(position, position),
-    initialRange: new vscode.Range(position, position),
+    initialPosition: position,
     text: "",
-    count: 0,
     arg: undefined,
   };
 
@@ -354,9 +353,8 @@ async function tryThingType(
   const newSelection = await bounds.getNewSelection(editor, {
     type,
     range: new vscode.Range(position, position),
-    initialRange: new vscode.Range(position, position),
+    initialPosition: position,
     text: "",
-    count: 0,
     arg,
   });
 
@@ -386,9 +384,7 @@ async function tryThingType(
 
 async function startEasyKill(selectMode: boolean, initialTypeList?: ThingType[]) {
   const editor = vscode.window.activeTextEditor;
-  if (!editor || isActive) {
-    return;
-  }
+  if (!editor || isActive) return;
 
   const position = editor.selection.active;
   initialCursorPosition = position;
@@ -472,10 +468,7 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
 
     if (char in typeMap) {
       const value = typeMap[char];
-
-      if (!value) {
-        return;
-      }
+      if (!value) return;
 
       switch (value) {
         case "accept":
@@ -491,7 +484,7 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
           await shrinkSelection(editor, 1);
           return;
         case "reset":
-          await updateSelectionWithCount(editor, 1);
+          await resetSelection(editor);
           return;
         case "cycle":
           await cycleSelection(editor);
@@ -525,7 +518,7 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
           return;
         default:
           if (isThingType(value)) {
-            if (currentSelection.type === value && currentSelection.count > 0) {
+            if (currentSelection.type === value) {
               await expandSelection(editor, 1);
             } else {
               await changeSelectionType(editor, value);
@@ -585,9 +578,8 @@ async function changeSelectionType(editor: vscode.TextEditor, type: ThingType) {
     const newSelection = await bounds.getNewSelection(editor, {
       type,
       range: new vscode.Range(initialCursorPosition, initialCursorPosition),
-      initialRange: new vscode.Range(initialCursorPosition, initialCursorPosition),
+      initialPosition: initialCursorPosition,
       text: "",
-      count: 0,
       arg: undefined,
     });
 
@@ -603,15 +595,8 @@ async function changeSelectionType(editor: vscode.TextEditor, type: ThingType) {
     return;
   }
 
-  debug("[changeSelectionType] from:", currentSelection.type, "to:", type, "count:", currentSelection.count);
-  const newSelection = await bounds.getNewSelection(editor, {
-    type,
-    range: currentSelection.range,
-    initialRange: currentSelection.initialRange,
-    text: currentSelection.text,
-    count: 0,
-    arg: currentSelection.arg,
-  });
+  debug("[changeSelectionType] from:", currentSelection.type, "to:", type);
+  const newSelection = await bounds.getNewSelection(editor, currentSelection);
   if (newSelection) {
     currentSelection = newSelection;
     await updateSelection(editor, currentSelection, isSelectMode);
@@ -622,24 +607,36 @@ async function changeSelectionType(editor: vscode.TextEditor, type: ThingType) {
 
 async function expandSelection(editor: vscode.TextEditor, delta: number) {
   if (!currentSelection) return;
-  await updateSelectionWithCount(editor, currentSelection.count + delta);
+
+  const { type } = currentSelection;
+  const bounds = thingBoundsTable[type];
+  const newSelection = await bounds.getNewSelection(editor, currentSelection, delta);
+
+  if (newSelection) {
+    currentSelection = newSelection;
+    await updateSelection(editor, currentSelection, isSelectMode);
+  }
 }
 
 async function shrinkSelection(editor: vscode.TextEditor, delta: number) {
   if (!currentSelection) return;
 
-  const newCount = currentSelection.count - delta;
-  await updateSelectionWithCount(editor, newCount);
+  const { type } = currentSelection;
+  const bounds = thingBoundsTable[type];
+  const newSelection = await bounds.getNewSelection(editor, currentSelection, -delta);
+
+  if (newSelection) {
+    currentSelection = newSelection;
+    await updateSelection(editor, currentSelection, isSelectMode);
+  }
 }
 
-async function updateSelectionWithCount(editor: vscode.TextEditor, newCount: number) {
+async function resetSelection(editor: vscode.TextEditor) {
   if (!currentSelection) return;
 
   const { type } = currentSelection;
   const bounds = thingBoundsTable[type];
-  const delta = newCount - currentSelection.count;
-
-  const newSelection = await bounds.getNewSelection(editor, currentSelection, delta);
+  const newSelection = await bounds.getNewSelection(editor, currentSelection, undefined);
 
   if (newSelection) {
     currentSelection = newSelection;

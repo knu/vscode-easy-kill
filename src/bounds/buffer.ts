@@ -25,10 +25,10 @@ class BufferBeforeBounds extends ThingBoundsBase {
     delta?: number
   ): Promise<Selection | null> {
     const { document } = editor;
-    const position = currentSelection.initialRange?.start || editor.selection.active;
+    const position = currentSelection.initialPosition;
     const range = new vscode.Range(new vscode.Position(0, 0), position);
     const text = document.getText(range);
-    return { type: this.type, range, initialRange: range, text, count: 1 };
+    return { type: this.type, range, initialPosition: position, text };
   }
 }
 

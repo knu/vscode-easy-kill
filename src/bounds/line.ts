@@ -42,20 +42,21 @@ class BackwardLineEdgeBounds extends ThingBoundsBase {
     delta?: number
   ): Promise<Selection | null> {
     const { document } = editor;
-    const position = currentSelection.initialRange?.end || editor.selection.active;
+    const position = currentSelection.initialPosition;
     const line = document.lineAt(position.line);
     const text = line.text;
     const firstNonWhitespace = text.search(/\S/);
     const indentPos =
       firstNonWhitespace >= 0 ? new vscode.Position(position.line, firstNonWhitespace) : line.range.start;
 
-    if (currentSelection.count === 0 || delta === undefined) {
+    if (delta === undefined) {
+      // Initial selection: start from indent position if cursor is after it
       if (position.character <= indentPos.character) {
         const range = new vscode.Range(line.range.start, position);
-        const initialRange = new vscode.Range(position, position);
-        return { type: this.type, range, initialRange, text: document.getText(range), count: 1 };
+        return { type: this.type, range, initialPosition: position, text: document.getText(range) };
       }
 
+      // Check if we should expand from indent to line start
       const currentSel = this.getCurrentSelection();
       if (currentSel && currentSel.type === "backward-line-edge") {
         if (currentSel.range.start.isEqual(indentPos) && !indentPos.isEqual(line.range.start)) {
@@ -63,42 +64,42 @@ class BackwardLineEdgeBounds extends ThingBoundsBase {
           return {
             type: this.type,
             range,
-            initialRange: currentSelection.initialRange,
+            initialPosition: currentSelection.initialPosition,
             text: document.getText(range),
-            count: 2,
           };
         }
       }
 
       const range = new vscode.Range(indentPos, position);
-      const initialRange = new vscode.Range(position, position);
-      return { type: this.type, range, initialRange, text: document.getText(range), count: 1 };
+      return { type: this.type, range, initialPosition: position, text: document.getText(range) };
     }
 
-    const newCount = delta !== undefined ? currentSelection.count + delta : currentSelection.count;
-    if (newCount === 1) {
-      const range = new vscode.Range(indentPos, position);
-      return {
-        type: this.type,
-        range,
-        initialRange: currentSelection.initialRange,
-        text: document.getText(range),
-        count: 1,
-      };
-    } else if (newCount === 2) {
-      const range = new vscode.Range(line.range.start, position);
-      return {
-        type: this.type,
-        range,
-        initialRange: currentSelection.initialRange,
-        text: document.getText(range),
-        count: 2,
-      };
-    } else if (newCount <= 0) {
-      return null;
+    // Handle delta: shrink/expand
+    if (delta > 0) {
+      // Expand: if at indent, go to line start
+      if (currentSelection.range.start.isEqual(indentPos)) {
+        const range = new vscode.Range(line.range.start, position);
+        return {
+          type: this.type,
+          range,
+          initialPosition: currentSelection.initialPosition,
+          text: document.getText(range),
+        };
+      }
+    } else if (delta < 0) {
+      // Shrink: if at line start, go to indent
+      if (currentSelection.range.start.isEqual(line.range.start)) {
+        const range = new vscode.Range(indentPos, position);
+        return {
+          type: this.type,
+          range,
+          initialPosition: currentSelection.initialPosition,
+          text: document.getText(range),
+        };
+      }
     }
 
-    return null;
+    return currentSelection;
   }
 }
 

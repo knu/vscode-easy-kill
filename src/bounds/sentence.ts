@@ -73,7 +73,7 @@ export class SentenceBounds extends ThingBoundsBase {
     }
 
     const range = new vscode.Range(document.positionAt(lastEnd), document.positionAt(endPos));
-    if (range.contains(position) || range.start.isEqual(position)) {
+    if (position.isAfterOrEqual(range.start)) {
       return range;
     }
 

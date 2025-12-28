@@ -1,27 +1,17 @@
 import * as vscode from "vscode";
-import { ThingBoundsBase } from "./base";
+import { ThingBoundsBase, nextPosition, previousPosition } from "./base";
 import { preserveSelection } from "../extension";
 
 export function nextWordEnd(document: vscode.TextDocument, position: vscode.Position): vscode.Position | null {
   let pos = position;
 
   while (true) {
-    if (
-      pos.line >= document.lineCount ||
-      (pos.line === document.lineCount - 1 && pos.character >= document.lineAt(pos.line).text.length)
-    ) {
-      return null;
-    }
+    const next = nextPosition(document, pos);
+    if (next === null) return null;
+    pos = next;
 
     const range = document.getWordRangeAtPosition(pos);
-    if (range?.end.isAfter(position)) {
-      return range.end;
-    }
-
-    pos =
-      pos.character < document.lineAt(pos.line).text.length
-        ? pos.translate(0, 1)
-        : new vscode.Position(pos.line + 1, 0);
+    if (range !== undefined) return range.end;
   }
 }
 
@@ -29,30 +19,13 @@ export function previousWordStart(document: vscode.TextDocument, position: vscod
   let pos = position;
 
   while (true) {
-    if (pos.line === 0 && pos.character === 0) {
-      return null;
-    }
-
-    pos =
-      pos.character > 0
-        ? pos.translate(0, -1)
-        : new vscode.Position(pos.line - 1, document.lineAt(pos.line - 1).text.length);
+    const prev = previousPosition(document, pos);
+    if (prev === null) return null;
+    pos = prev;
 
     const range = document.getWordRangeAtPosition(pos);
-    if (range?.start.isBefore(position)) {
-      return range.start;
-    }
+    if (range !== undefined) return range.start;
   }
-}
-
-export function forwardWordRange(document: vscode.TextDocument, position: vscode.Position): vscode.Range | null {
-  const wordEnd = nextWordEnd(document, position);
-  return (wordEnd && document.getWordRangeAtPosition(wordEnd.translate(0, -1))) ?? null;
-}
-
-export function backwardWordRange(document: vscode.TextDocument, position: vscode.Position): vscode.Range | null {
-  const wordStart = previousWordStart(document, position);
-  return (wordStart && document.getWordRangeAtPosition(wordStart)) ?? null;
 }
 
 export class WordBounds extends ThingBoundsBase {
@@ -76,11 +49,12 @@ export class SubwordBounds extends ThingBoundsBase {
 
   async getNextEnd(editor: vscode.TextEditor, position: vscode.Position): Promise<vscode.Position | null> {
     const { document } = editor;
-    const wordRange = forwardWordRange(document, position);
+    const wordEnd = nextWordEnd(document, position);
+    const wordRange = wordEnd && document.getWordRangeAtPosition(wordEnd);
     if (!wordRange) return null;
 
     return preserveSelection(editor, async () => {
-      const startPos = wordRange.start.isBeforeOrEqual(position) ? position : wordRange.start;
+      const startPos = position.isAfter(wordRange.start) ? position : wordRange.start;
       editor.selection = new vscode.Selection(startPos, startPos);
       await vscode.commands.executeCommand("cursorWordPartRight");
       return editor.selection.active;
@@ -89,11 +63,12 @@ export class SubwordBounds extends ThingBoundsBase {
 
   async getPreviousStart(editor: vscode.TextEditor, position: vscode.Position): Promise<vscode.Position | null> {
     const { document } = editor;
-    const wordRange = backwardWordRange(document, position);
+    const wordStart = previousWordStart(document, position);
+    const wordRange = wordStart && document.getWordRangeAtPosition(wordStart);
     if (!wordRange) return null;
 
     return preserveSelection(editor, async () => {
-      const startPos = position.isBeforeOrEqual(wordRange.end) ? position : wordRange.end;
+      const startPos = position.isBefore(wordRange.end) ? position : wordRange.end;
       editor.selection = new vscode.Selection(startPos, startPos);
       await vscode.commands.executeCommand("cursorWordPartLeft");
       return editor.selection.active;

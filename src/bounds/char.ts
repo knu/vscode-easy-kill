@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { ThingBounds, ThingType, Selection } from "../types";
 import { withAwaitingArgument } from "../extension";
-import { debug } from "../debug";
 
 type CharSearchType =
   | "string-to-char-forward"
@@ -9,14 +8,26 @@ type CharSearchType =
   | "string-to-char-backward"
   | "string-up-to-char-backward";
 
+interface CharSearchProperties {
+  forward: boolean;
+  inclusive: boolean;
+}
+
+// Master table: type → properties
+const charSearchPropertiesTable: Record<CharSearchType, CharSearchProperties> = {
+  "string-to-char-forward": { forward: true, inclusive: true },
+  "string-up-to-char-forward": { forward: true, inclusive: false },
+  "string-to-char-backward": { forward: false, inclusive: true },
+  "string-up-to-char-backward": { forward: false, inclusive: false },
+};
+
 function getCharSearchType(forward: boolean, inclusive: boolean): CharSearchType {
-  return forward
-    ? inclusive
-      ? "string-to-char-forward"
-      : "string-up-to-char-forward"
-    : inclusive
-      ? "string-to-char-backward"
-      : "string-up-to-char-backward";
+  for (const [type, props] of Object.entries(charSearchPropertiesTable)) {
+    if (props.forward === forward && props.inclusive === inclusive) {
+      return type as CharSearchType;
+    }
+  }
+  throw new Error(`Invalid char search properties: forward=${forward}, inclusive=${inclusive}`);
 }
 
 function findCharInText(
@@ -39,13 +50,13 @@ function findCharInText(
 
 const charSearchBoundsTable: Partial<Record<CharSearchType, ThingBounds>> = {};
 
+let lastChar: string | null = null;
+
 function isCharSearchType(type: ThingType): type is CharSearchType {
   return type in charSearchBoundsTable;
 }
 
 function createCharSearchBounds(forward: boolean, inclusive: boolean): ThingBounds {
-  let lastChar: string | null = null;
-
   const type = getCharSearchType(forward, inclusive);
 
   async function getRangeAtPosition(editor: vscode.TextEditor, position: vscode.Position, arg?: string) {
@@ -53,10 +64,7 @@ function createCharSearchBounds(forward: boolean, inclusive: boolean): ThingBoun
     if (!char) return null;
 
     const { document } = editor;
-    const text = document.getText();
-    const offset = document.offsetAt(position);
-
-    const result = findCharInText(text, char, offset, forward, inclusive);
+    const result = findCharInText(document.getText(), char, document.offsetAt(position), forward, inclusive);
     if (!result) return null;
 
     return new vscode.Range(document.positionAt(result.start), document.positionAt(result.end));
@@ -100,118 +108,136 @@ function createCharSearchBounds(forward: boolean, inclusive: boolean): ThingBoun
         return document.positionAt(result.end);
       }
     },
+    async getNextStart(editor: vscode.TextEditor, position: vscode.Position, arg?: string) {
+      const char = arg ?? lastChar;
+      if (!char) return null;
+
+      const { document } = editor;
+      const nextCharOffset = document.getText().indexOf(char, document.offsetAt(position) + 1);
+      if (nextCharOffset === -1) return null;
+
+      return document.positionAt(forward || inclusive ? nextCharOffset : nextCharOffset + 1);
+    },
+    async getPreviousEnd(editor: vscode.TextEditor, position: vscode.Position, arg?: string) {
+      const char = arg ?? lastChar;
+      if (!char) return null;
+
+      const { document } = editor;
+      let offset = document.offsetAt(position);
+
+      const currentRange = await getRangeAtPosition(editor, position, arg);
+      if (currentRange && position.isAfter(currentRange.start)) offset = document.offsetAt(currentRange.start);
+
+      const prevCharOffset = document.getText().lastIndexOf(char, offset - 1);
+      if (prevCharOffset === -1) return null;
+
+      return document.positionAt(forward && inclusive ? prevCharOffset + 1 : prevCharOffset);
+    },
     async getNewSelection(
       editor: vscode.TextEditor,
       currentSelection: Selection,
       delta?: number
     ): Promise<Selection | null> {
       const { document } = editor;
-      const { initialRange, count, arg } = currentSelection;
+      const { initialPosition, range, arg } = currentSelection;
 
-      if (count === 0 || (delta === undefined && !isCharSearchType(currentSelection.type))) {
-        let searchChar: string | undefined;
-        if (!isCharSearchType(currentSelection.type)) {
-          if (bounds.readArgument) {
-            searchChar = (await bounds.readArgument(editor, initialRange.start)) ?? undefined;
-          }
-        } else {
-          searchChar = arg;
-          if (!searchChar && bounds.readArgument) {
-            searchChar = (await bounds.readArgument(editor, initialRange.start)) ?? undefined;
-          }
-        }
+      if (!isCharSearchType(currentSelection.type) || !arg) {
+        const searchChar = await bounds.readArgument!(editor, initialPosition);
         if (!searchChar) return null;
 
-        const position = initialRange.start;
-        const range = await getRangeAtPosition(editor, position, searchChar);
-        if (!range) return null;
-        const text = document.getText(range);
-        const cursorRange = new vscode.Range(position, position);
-        return { type, range, initialRange: cursorRange, text, count: 1, arg: searchChar };
+        const newRange = await getRangeAtPosition(editor, initialPosition, searchChar);
+        if (!newRange) return null;
+        const text = document.getText(newRange);
+        return { type, range: newRange, initialPosition, text, arg: searchChar };
       }
 
-      // Char search family: handle direction change
-      if (delta === undefined && isCharSearchType(currentSelection.type) && currentSelection.type !== type) {
-        const currentIsForward = currentSelection.type.includes("forward");
-        const newIsForward = forward;
+      if (delta === undefined) {
+        const rangeStartOffset = document.offsetAt(range.start);
+        const rangeEndOffset = document.offsetAt(range.end);
+        const initialOffset = document.offsetAt(initialPosition);
 
-        if (currentIsForward !== newIsForward) {
-          debug("[char search direction change] from:", currentSelection.type, "to:", type, "count:", count);
-
-          const oldBounds = charSearchBoundsTable[currentSelection.type];
-          if (!oldBounds) return null;
-          const shrunkSelection = await oldBounds.getNewSelection(editor, currentSelection, -1);
-
-          if (shrunkSelection) {
-            const newInitialRange = new vscode.Range(initialRange.start, initialRange.start);
-            return {
-              ...shrunkSelection,
-              type,
-              initialRange: newInitialRange,
-              count: 0,
-            };
-          }
-          return null;
-        } else {
-          debug("[char search same direction] type:", type, "count:", count);
+        if (rangeStartOffset === rangeEndOffset && rangeStartOffset === initialOffset) {
+          const newRange = await getRangeAtPosition(editor, initialPosition, arg);
+          if (!newRange) return null;
+          const text = document.getText(newRange);
+          return { type, range: newRange, initialPosition, text, arg };
         }
+
+        const { forward: oldForward, inclusive: oldInclusive } = charSearchPropertiesTable[currentSelection.type as CharSearchType];
+
+        if (oldForward !== forward) {
+          const charOffset = rangeEndOffset > initialOffset
+            ? (oldInclusive ? rangeEndOffset - 1 : rangeEndOffset)
+            : (oldInclusive ? rangeStartOffset : rangeStartOffset - 1);
+
+          const text = document.getText();
+          const newCharOffset = rangeEndOffset > initialOffset
+            ? text.lastIndexOf(arg, charOffset - 1)
+            : text.indexOf(arg, charOffset + 1);
+
+          if (newCharOffset === -1) return currentSelection;
+
+          const [newStart, newEnd] = newCharOffset >= initialOffset
+            ? [initialOffset, inclusive ? newCharOffset + 1 : newCharOffset]
+            : [inclusive ? newCharOffset : newCharOffset + 1, initialOffset];
+
+          const newRange = new vscode.Range(document.positionAt(newStart), document.positionAt(newEnd));
+          return { type, range: newRange, initialPosition, text: document.getText(newRange), arg };
+        }
+
+        if ((forward && rangeStartOffset < initialOffset) || (!forward && rangeEndOffset > initialOffset)) {
+          const newRange = await getRangeAtPosition(editor, initialPosition, arg);
+          if (!newRange) return null;
+          return { type, range: newRange, initialPosition, text: document.getText(newRange), arg };
+        }
+
+        const charOffset = rangeEndOffset > initialOffset
+          ? (oldInclusive ? rangeEndOffset - 1 : rangeEndOffset)
+          : (oldInclusive ? rangeStartOffset : rangeStartOffset - 1);
+
+        const [newStart, newEnd] = charOffset >= initialOffset
+          ? [initialOffset, inclusive ? charOffset + 1 : charOffset]
+          : [inclusive ? charOffset : charOffset + 1, initialOffset];
+
+        const newRange = new vscode.Range(document.positionAt(newStart), document.positionAt(newEnd));
+        return { type, range: newRange, initialPosition, text: document.getText(newRange), arg };
       }
 
-      let newCount = count + (delta ?? 0);
+      if (delta === 0) return currentSelection;
 
-      if (newCount <= 0) {
-        newCount = 1 - newCount;
-        debug("[count flip] oldCount:", count, "delta:", delta, "newCount after flip:", newCount);
-        const flippedType = getCharSearchType(!forward, inclusive);
-        const flippedBounds = charSearchBoundsTable[flippedType];
-        if (!flippedBounds) return null;
-        return await flippedBounds.getNewSelection(editor, { ...currentSelection, count: newCount }, 0);
-      }
-
-      const char = arg ?? "";
       const text = document.getText();
+      const initialOffset = document.offsetAt(initialPosition);
+      const { forward: currentForward, inclusive: currentInclusive } = charSearchPropertiesTable[currentSelection.type as CharSearchType];
 
-      if (newCount === 1) {
-        const range = await getRangeAtPosition(editor, initialRange.start, arg);
-        if (!range) return null;
-        const rangeText = document.getText(range);
-        return { type, range, initialRange, text: rangeText, count: 1, arg };
+      const rangeStartOffset = document.offsetAt(range.start);
+      const rangeEndOffset = document.offsetAt(range.end);
+
+      const charOffset = rangeEndOffset > initialOffset
+        ? (currentInclusive ? rangeEndOffset - 1 : rangeEndOffset)
+        : currentForward ? rangeStartOffset : (currentInclusive ? rangeStartOffset : rangeStartOffset - 1);
+
+      const moveRight = forward ? (delta > 0) : (delta < 0);
+      let newCharOffset = charOffset;
+
+      for (let i = Math.abs(delta); i > 0; i--) {
+        const pos = moveRight ? text.indexOf(arg, newCharOffset + 1) : text.lastIndexOf(arg, newCharOffset - 1);
+        if (pos === -1) break;
+        newCharOffset = pos;
       }
 
-      const cursorOffset = document.offsetAt(initialRange.start);
-      let newRange: vscode.Range | null = null;
+      const [newStart, newEnd] = newCharOffset >= initialOffset
+        ? [initialOffset, inclusive ? newCharOffset + 1 : newCharOffset]
+        : [inclusive ? newCharOffset : newCharOffset + 1, initialOffset];
 
-      if (forward) {
-        let currentOffset = cursorOffset;
-        for (let i = 0; i < newCount; i++) {
-          const targetOffset = text.indexOf(char, currentOffset + 1);
-          if (targetOffset === -1) break;
-          currentOffset = inclusive ? targetOffset + 1 : targetOffset;
-        }
-        newRange = new vscode.Range(initialRange.start, document.positionAt(currentOffset));
-      } else {
-        let currentOffset = cursorOffset;
-        for (let i = 0; i < newCount; i++) {
-          const searchFrom = i === 0 ? currentOffset - 1 : currentOffset - 2;
-          const targetOffset = text.lastIndexOf(char, searchFrom);
-          if (targetOffset === -1) break;
-          currentOffset = inclusive ? targetOffset : targetOffset + 1;
-        }
-        newRange = new vscode.Range(document.positionAt(currentOffset), initialRange.start);
-      }
-
-      if (!newRange) return null;
-      const rangeText = document.getText(newRange);
-      return { type, range: newRange, initialRange, text: rangeText, count: newCount, arg };
+      const newRange = new vscode.Range(document.positionAt(newStart), document.positionAt(newEnd));
+      return { type, range: newRange, initialPosition, text: document.getText(newRange), arg };
     },
     async readArgument(editor: vscode.TextEditor, position: vscode.Position) {
       const char = await withAwaitingArgument<string>(type, () => {
         vscode.window.setStatusBarMessage(`$(search) ${forward ? "Find" : "Reverse find"} character...`, 5000);
       });
 
-      if (char) {
-        lastChar = char;
-      }
+      if (char) lastChar = char;
 
       return char;
     },

@@ -94,21 +94,18 @@ suite("Line Navigation Tests", () => {
       const initialSelection: Selection = {
         type: "backward-line-edge",
         range: new vscode.Range(pos(0, 13), pos(0, 13)),
-        initialRange: new vscode.Range(pos(0, 13), pos(0, 13)),
+        initialPosition: pos(0, 13),
         text: "",
-        count: 0,
       };
 
       const selection1 = await bounds.getNewSelection(editor, initialSelection);
       assert.ok(selection1);
       assert.strictEqual(doc.getText(selection1.range), "hello world");
-      assert.strictEqual(selection1.count, 1);
 
       currentSel = selection1;
-      const selection2 = await bounds.getNewSelection(editor, selection1);
+      const selection2 = await bounds.getNewSelection(editor, selection1, 1);
       assert.ok(selection2);
       assert.strictEqual(doc.getText(selection2.range), "  hello world");
-      assert.strictEqual(selection2.count, 2);
     });
 
     test("handles position at beginning of line", async () => {
@@ -120,16 +117,14 @@ suite("Line Navigation Tests", () => {
       const initialSelection: Selection = {
         type: "backward-line-edge",
         range: new vscode.Range(pos(0, 0), pos(0, 0)),
-        initialRange: new vscode.Range(pos(0, 0), pos(0, 0)),
+        initialPosition: pos(0, 0),
         text: "",
-        count: 0,
       };
 
       const selection = await bounds.getNewSelection(editor, initialSelection);
 
       assert.ok(selection);
       assert.strictEqual(doc.getText(selection.range), "");
-      assert.strictEqual(selection.count, 1);
     });
 
     test("handles line with no indent", async () => {
@@ -141,16 +136,14 @@ suite("Line Navigation Tests", () => {
       const initialSelection: Selection = {
         type: "backward-line-edge",
         range: new vscode.Range(pos(0, 5), pos(0, 5)),
-        initialRange: new vscode.Range(pos(0, 5), pos(0, 5)),
+        initialPosition: pos(0, 5),
         text: "",
-        count: 0,
       };
 
       const selection = await bounds.getNewSelection(editor, initialSelection);
 
       assert.ok(selection);
       assert.strictEqual(doc.getText(selection.range), "hello");
-      assert.strictEqual(selection.count, 1);
     });
   });
 
