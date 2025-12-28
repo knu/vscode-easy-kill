@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0] - 2025-12-29
+
+### Fixed
+
+- Character search (f/F/t/T) expand/shrink behavior now works correctly
+- Selection now includes the current thing even when it ends at the cursor position
+
 ## [0.2.2] - 2025-12-27
 
 ### Added
