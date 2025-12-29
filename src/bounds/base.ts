@@ -1,10 +1,7 @@
 import * as vscode from "vscode";
 import { ThingType, ThingBounds, Selection } from "../types";
 
-export function nextPosition(
-  document: vscode.TextDocument,
-  position: vscode.Position
-): vscode.Position | null {
+export function nextPosition(document: vscode.TextDocument, position: vscode.Position): vscode.Position | null {
   const line = document.lineAt(position.line);
 
   if (position.character < line.range.end.character) {
@@ -16,10 +13,7 @@ export function nextPosition(
   return null;
 }
 
-export function previousPosition(
-  document: vscode.TextDocument,
-  position: vscode.Position
-): vscode.Position | null {
+export function previousPosition(document: vscode.TextDocument, position: vscode.Position): vscode.Position | null {
   if (position.character > 0) {
     return position.translate(0, -1);
   }

@@ -163,23 +163,29 @@ function createCharSearchBounds(forward: boolean, inclusive: boolean): ThingBoun
           return { type, range: newRange, initialPosition, text, arg };
         }
 
-        const { forward: oldForward, inclusive: oldInclusive } = charSearchPropertiesTable[currentSelection.type as CharSearchType];
+        const { forward: oldForward, inclusive: oldInclusive } =
+          charSearchPropertiesTable[currentSelection.type as CharSearchType];
 
         if (oldForward !== forward) {
-          const charOffset = rangeEndOffset > initialOffset
-            ? (oldInclusive ? rangeEndOffset - 1 : rangeEndOffset)
-            : (oldInclusive ? rangeStartOffset : rangeStartOffset - 1);
+          const charOffset =
+            rangeEndOffset > initialOffset
+              ? oldInclusive
+                ? rangeEndOffset - 1
+                : rangeEndOffset
+              : oldInclusive
+                ? rangeStartOffset
+                : rangeStartOffset - 1;
 
           const text = document.getText();
-          const newCharOffset = rangeEndOffset > initialOffset
-            ? text.lastIndexOf(arg, charOffset - 1)
-            : text.indexOf(arg, charOffset + 1);
+          const newCharOffset =
+            rangeEndOffset > initialOffset ? text.lastIndexOf(arg, charOffset - 1) : text.indexOf(arg, charOffset + 1);
 
           if (newCharOffset === -1) return currentSelection;
 
-          const [newStart, newEnd] = newCharOffset >= initialOffset
-            ? [initialOffset, inclusive ? newCharOffset + 1 : newCharOffset]
-            : [inclusive ? newCharOffset : newCharOffset + 1, initialOffset];
+          const [newStart, newEnd] =
+            newCharOffset >= initialOffset
+              ? [initialOffset, inclusive ? newCharOffset + 1 : newCharOffset]
+              : [inclusive ? newCharOffset : newCharOffset + 1, initialOffset];
 
           const newRange = new vscode.Range(document.positionAt(newStart), document.positionAt(newEnd));
           return { type, range: newRange, initialPosition, text: document.getText(newRange), arg };
@@ -191,13 +197,19 @@ function createCharSearchBounds(forward: boolean, inclusive: boolean): ThingBoun
           return { type, range: newRange, initialPosition, text: document.getText(newRange), arg };
         }
 
-        const charOffset = rangeEndOffset > initialOffset
-          ? (oldInclusive ? rangeEndOffset - 1 : rangeEndOffset)
-          : (oldInclusive ? rangeStartOffset : rangeStartOffset - 1);
+        const charOffset =
+          rangeEndOffset > initialOffset
+            ? oldInclusive
+              ? rangeEndOffset - 1
+              : rangeEndOffset
+            : oldInclusive
+              ? rangeStartOffset
+              : rangeStartOffset - 1;
 
-        const [newStart, newEnd] = charOffset >= initialOffset
-          ? [initialOffset, inclusive ? charOffset + 1 : charOffset]
-          : [inclusive ? charOffset : charOffset + 1, initialOffset];
+        const [newStart, newEnd] =
+          charOffset >= initialOffset
+            ? [initialOffset, inclusive ? charOffset + 1 : charOffset]
+            : [inclusive ? charOffset : charOffset + 1, initialOffset];
 
         const newRange = new vscode.Range(document.positionAt(newStart), document.positionAt(newEnd));
         return { type, range: newRange, initialPosition, text: document.getText(newRange), arg };
@@ -207,16 +219,24 @@ function createCharSearchBounds(forward: boolean, inclusive: boolean): ThingBoun
 
       const text = document.getText();
       const initialOffset = document.offsetAt(initialPosition);
-      const { forward: currentForward, inclusive: currentInclusive } = charSearchPropertiesTable[currentSelection.type as CharSearchType];
+      const { forward: currentForward, inclusive: currentInclusive } =
+        charSearchPropertiesTable[currentSelection.type as CharSearchType];
 
       const rangeStartOffset = document.offsetAt(range.start);
       const rangeEndOffset = document.offsetAt(range.end);
 
-      const charOffset = rangeEndOffset > initialOffset
-        ? (currentInclusive ? rangeEndOffset - 1 : rangeEndOffset)
-        : currentForward ? rangeStartOffset : (currentInclusive ? rangeStartOffset : rangeStartOffset - 1);
+      const charOffset =
+        rangeEndOffset > initialOffset
+          ? currentInclusive
+            ? rangeEndOffset - 1
+            : rangeEndOffset
+          : currentForward
+            ? rangeStartOffset
+            : currentInclusive
+              ? rangeStartOffset
+              : rangeStartOffset - 1;
 
-      const moveRight = forward ? (delta > 0) : (delta < 0);
+      const moveRight = forward ? delta > 0 : delta < 0;
       let newCharOffset = charOffset;
 
       for (let i = Math.abs(delta); i > 0; i--) {
@@ -225,9 +245,10 @@ function createCharSearchBounds(forward: boolean, inclusive: boolean): ThingBoun
         newCharOffset = pos;
       }
 
-      const [newStart, newEnd] = newCharOffset >= initialOffset
-        ? [initialOffset, inclusive ? newCharOffset + 1 : newCharOffset]
-        : [inclusive ? newCharOffset : newCharOffset + 1, initialOffset];
+      const [newStart, newEnd] =
+        newCharOffset >= initialOffset
+          ? [initialOffset, inclusive ? newCharOffset + 1 : newCharOffset]
+          : [inclusive ? newCharOffset : newCharOffset + 1, initialOffset];
 
       const newRange = new vscode.Range(document.positionAt(newStart), document.positionAt(newEnd));
       return { type, range: newRange, initialPosition, text: document.getText(newRange), arg };
