@@ -24,6 +24,7 @@ let isActive = false;
 let isSelectMode = false;
 let statusBarItem: vscode.StatusBarItem;
 let lastCopiedText: string | null = null;
+let copiedMessageDisposable: vscode.Disposable | null = null;
 let initialCursorPosition: vscode.Position | null = null;
 let awaitingArgument: { type: ThingType; resolve: (arg: string | null) => void } | null = null;
 let cancelCallback: (() => void) | null = null;
@@ -85,7 +86,10 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("easyKill.copy", async () => {
       const editor = vscode.window.activeTextEditor;
       if (editor && !editor.selection.isEmpty) {
-        return vscode.commands.executeCommand("editor.action.clipboardCopyAction");
+        const text = editor.document.getText(editor.selection);
+        await vscode.commands.executeCommand("editor.action.clipboardCopyAction");
+        showCopiedMessage(text);
+        return;
       }
       return startEasyKill(false);
     })
@@ -287,9 +291,8 @@ async function tryInstantCopy(
   if (!selection) {
     isActive = false;
     vscode.commands.executeCommand("setContext", "easyKillActive", false);
-    copyToClipboard(text);
-    const preview = text.length > 50 ? text.substring(0, 47) + "..." : text;
-    vscode.window.showInformationMessage(`Copied ${type}: ${preview}`);
+    copyTextToClipboard(text);
+    vscode.window.showInformationMessage(`Copied: ${type}`);
     return true;
   }
 
@@ -303,10 +306,6 @@ async function tryInstantCopy(
   selection.text = text;
   currentSelection = selection;
   isSelectMode = selectMode;
-
-  if (!selectMode) {
-    copyToClipboard(selection.text);
-  }
 
   updateSelection(editor, selection, selectMode);
   return true;
@@ -367,10 +366,6 @@ async function tryThingType(
     currentSelection = newSelection;
     isSelectMode = selectMode;
 
-    if (!selectMode) {
-      copyToClipboard(newSelection.text);
-    }
-
     updateSelection(editor, newSelection, selectMode);
     return true;
   }
@@ -416,7 +411,7 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
   await changeSelection(editor, new vscode.Selection(selection.range.start, selection.range.end));
   updateStatusBar(selection);
   if (!selectMode) {
-    await copyToClipboard(selection.text);
+    await copySelectionToClipboard(editor);
   }
 
   globalTypeDisposable?.dispose();
@@ -589,9 +584,8 @@ async function changeSelectionType(editor: vscode.TextEditor, type: ThingType) {
       return;
     }
 
-    copyToClipboard(text);
-    const preview = text.length > 50 ? text.substring(0, 47) + "..." : text;
-    vscode.window.showInformationMessage(`Copied ${type}: ${preview}`);
+    copyTextToClipboard(text);
+    vscode.window.showInformationMessage(`Copied: ${type}`);
     return;
   }
 
@@ -654,14 +648,24 @@ async function cycleSelection(editor: vscode.TextEditor) {
   await changeSelectionType(editor, nextType);
 }
 
-async function copyToClipboard(text: string) {
-  if (!isSelectMode) {
-    await vscode.env.clipboard.writeText(text);
-    if (text !== lastCopiedText) {
-      vscode.window.setStatusBarMessage(`$(clippy) Copied: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`, 2000);
-      lastCopiedText = text;
-    }
+function showCopiedMessage(text: string) {
+  if (text !== lastCopiedText) {
+    copiedMessageDisposable?.dispose();
+    const preview = /^.{0,50}$/.test(text) ? text : text.slice(0, 50) + "...";
+    copiedMessageDisposable = vscode.window.setStatusBarMessage(`$(clippy) Copied: ${preview}`, 2000);
+    lastCopiedText = text;
   }
+}
+
+async function copyTextToClipboard(text: string) {
+  await vscode.env.clipboard.writeText(text);
+  showCopiedMessage(text);
+}
+
+async function copySelectionToClipboard(editor: vscode.TextEditor) {
+  const text = editor.document.getText(editor.selection);
+  await vscode.commands.executeCommand("editor.action.clipboardCopyAction");
+  showCopiedMessage(text);
 }
 
 function updateStatusBar(selection: Selection) {
