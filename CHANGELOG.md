@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.1] - 2026-01-01
+
+### Changed
+
+- Improve copy behavior and messages
+
 ## [0.3.0] - 2025-12-29
 
 ### Fixed
