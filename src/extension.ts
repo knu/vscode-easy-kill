@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { SubwordBounds, WordBounds } from "./bounds/word";
-import { LineBounds, createBackwardLineEdgeBounds, forwardLineEdgeBounds } from "./bounds/line";
+import { LineBounds, createBackwardLineEdgeBounds, createForwardLineEdgeBounds } from "./bounds/line";
 import { SentenceBounds } from "./bounds/sentence";
 import { ParagraphBounds } from "./bounds/paragraph";
 import { SexpBounds } from "./bounds/sexp";
@@ -231,7 +231,7 @@ function initializeThingBoundsTable() {
       /[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+/g,
     ]),
     createBackwardLineEdgeBounds(() => currentSelection),
-    forwardLineEdgeBounds,
+    createForwardLineEdgeBounds(() => currentSelection),
     ...charSearchBoundsArray,
   ];
 

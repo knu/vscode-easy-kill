@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
-import { LineBounds, createBackwardLineEdgeBounds, forwardLineEdgeBounds } from "./line";
+import { LineBounds, createBackwardLineEdgeBounds, createForwardLineEdgeBounds } from "./line";
 import { MockTextDocument, pos } from "../test-helpers";
 import { Selection } from "../types";
 
@@ -151,6 +151,7 @@ suite("Line Navigation Tests", () => {
     test("gets range from position to end of line", async () => {
       const doc = new MockTextDocument("hello world");
       const editor = createMockEditor(doc);
+      const forwardLineEdgeBounds = createForwardLineEdgeBounds(() => null);
 
       const range = await forwardLineEdgeBounds.getRangeAtPosition(editor, pos(0, 6));
 
@@ -161,6 +162,7 @@ suite("Line Navigation Tests", () => {
     test("gets empty range at end of line", async () => {
       const doc = new MockTextDocument("hello");
       const editor = createMockEditor(doc);
+      const forwardLineEdgeBounds = createForwardLineEdgeBounds(() => null);
 
       const range = await forwardLineEdgeBounds.getRangeAtPosition(editor, pos(0, 5));
 
@@ -171,11 +173,35 @@ suite("Line Navigation Tests", () => {
     test("gets range from beginning of line", async () => {
       const doc = new MockTextDocument("hello world");
       const editor = createMockEditor(doc);
+      const forwardLineEdgeBounds = createForwardLineEdgeBounds(() => null);
 
       const range = await forwardLineEdgeBounds.getRangeAtPosition(editor, pos(0, 0));
 
       assert.ok(range);
       assert.strictEqual(doc.getText(range), "hello world");
+    });
+
+    test("progressive selection from cursor to last non-space, then to end", async () => {
+      const doc = new MockTextDocument("hello world  ");
+      const editor = createMockEditor(doc);
+      let currentSel: Selection | null = null;
+      const bounds = createForwardLineEdgeBounds(() => currentSel);
+
+      const initialSelection: Selection = {
+        type: "forward-line-edge",
+        range: new vscode.Range(pos(0, 0), pos(0, 0)),
+        initialPosition: pos(0, 0),
+        text: "",
+      };
+
+      const selection1 = await bounds.getNewSelection(editor, initialSelection);
+      assert.ok(selection1);
+      assert.strictEqual(doc.getText(selection1.range), "hello world");
+
+      currentSel = selection1;
+      const selection2 = await bounds.getNewSelection(editor, selection1, 1);
+      assert.ok(selection2);
+      assert.strictEqual(doc.getText(selection2.range), "hello world  ");
     });
   });
 });
