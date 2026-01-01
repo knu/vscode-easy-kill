@@ -43,6 +43,7 @@
             "=": "expand",
             "-": "shrink",
             " ": "cycle",
+            "y": "duplicate-after",
             "0": "reset",
             "1": "expand-by-1",
             "2": "expand-by-2",
@@ -135,7 +136,9 @@
               "string-to-char-forward",
               "string-up-to-char-forward",
               "string-to-char-backward",
-              "string-up-to-char-backward"
+              "string-up-to-char-backward",
+              "duplicate-after",
+              "duplicate-before"
             ]
           }
         },
@@ -177,6 +180,16 @@
             "Replace the selection with the typed character",
             "Show error message and keep the selection"
           ]
+        },
+        "easyKill.objectTypeOrderForDuplicate": {
+          "type": "array",
+          "default": [
+            "line"
+          ],
+          "description": "Order of object types to try for initial selection in Duplicate mode. First matching type will be selected.",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -320,6 +333,14 @@
       {
         "command": "easyKill.backwardSentence",
         "title": "Easy Kill: Backward Sentence"
+      },
+      {
+        "command": "easyKill.duplicateAfter",
+        "title": "Easy Kill: Duplicate After"
+      },
+      {
+        "command": "easyKill.duplicateBefore",
+        "title": "Easy Kill: Duplicate Before"
       }
     ],
     "keybindings": [

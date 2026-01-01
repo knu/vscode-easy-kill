@@ -197,6 +197,10 @@ export function activate(context: vscode.ExtensionContext) {
       createMovementCommand("sentence", (bounds, editor, pos) => bounds.getPreviousStart(editor, pos))
     )
   );
+
+  context.subscriptions.push(vscode.commands.registerCommand("easyKill.duplicateAfter", () => startDuplicate(true)));
+
+  context.subscriptions.push(vscode.commands.registerCommand("easyKill.duplicateBefore", () => startDuplicate(false)));
 }
 
 function initializeThingBoundsTable() {
@@ -407,6 +411,69 @@ async function startEasyKill(selectMode: boolean, initialTypeList?: ThingType[])
   }
 }
 
+async function startDuplicate(after: boolean, savedInitialPosition?: vscode.Position | null) {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) return;
+
+  const selection = editor.selection;
+  let range: vscode.Range | null = null;
+  let thingType: ThingType = "line";
+
+  if (selection.isEmpty) {
+    const config = vscode.workspace.getConfiguration("easyKill");
+    const things: ThingType[] = config.get("objectTypeOrderForDuplicate", ["line"]);
+    for (const type of things) {
+      const bounds = thingBoundsTable[type];
+      if (bounds.getRangeAtPosition) {
+        range = await bounds.getRangeAtPosition(editor, selection.active);
+        if (range && !range.isEmpty) {
+          thingType = type;
+          break;
+        }
+      }
+    }
+  } else {
+    range = selection;
+  }
+
+  if (!range || range.isEmpty) {
+    vscode.window.showInformationMessage("No object found to duplicate");
+    return;
+  }
+
+  const text = editor.document.getText(range);
+
+  globalChangeDisposable?.dispose();
+  globalChangeDisposable = null;
+
+  await editor.edit((editBuilder) => {
+    editBuilder.insert(after ? range.end : range.start, text);
+  });
+
+  // Select the original, adjusting for shift when copy is inserted before
+  const startOffset = editor.document.offsetAt(range.start);
+  const shift = after ? 0 : text.length;
+  const newStart = editor.document.positionAt(startOffset + shift);
+  const newEnd = editor.document.positionAt(startOffset + shift + text.length);
+
+  const originalPosition = savedInitialPosition ?? selection.active;
+  const originalOffset = editor.document.offsetAt(originalPosition);
+  initialCursorPosition =
+    originalOffset >= startOffset && shift > 0 ? editor.document.positionAt(originalOffset + shift) : originalPosition;
+  isActive = true;
+  isSelectMode = true;
+  vscode.commands.executeCommand("setContext", "easyKillActive", true);
+
+  currentSelection = {
+    type: thingType,
+    range: new vscode.Range(newStart, newEnd),
+    initialPosition: initialCursorPosition,
+    text,
+  };
+
+  updateSelection(editor, currentSelection, true);
+}
+
 async function updateSelection(editor: vscode.TextEditor, selection: Selection, selectMode: boolean) {
   await changeSelection(editor, new vscode.Selection(selection.range.start, selection.range.end));
   updateStatusBar(selection);
@@ -511,6 +578,18 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
         case "expand-by-9":
           await expandSelection(editor, 9);
           return;
+        case "duplicate-after": {
+          const savedInitialPosition = initialCursorPosition;
+          cleanup(false);
+          await startDuplicate(true, savedInitialPosition);
+          return;
+        }
+        case "duplicate-before": {
+          const savedInitialPosition = initialCursorPosition;
+          cleanup(false);
+          await startDuplicate(false, savedInitialPosition);
+          return;
+        }
         default:
           if (isThingType(value)) {
             if (currentSelection.type === value) {
