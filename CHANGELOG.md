@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0] - 2026-01-01
+
+### Added
+
+- Add `duplicateAfter` and `duplicateBefore` commands that insert a copy of the selection while keeping the original selected
+- Add `y` key binding for `duplicate-after` in Select mode (customizable via `easyKill.keyBindings`)
+- Add `easyKill.objectTypeOrderForDuplicate` setting to configure object type detection for duplicate commands (default: line)
+
 ## [0.3.1] - 2026-01-01
 
 ### Changed
