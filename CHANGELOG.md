@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.1] - 2026-01-02
+
+### Added
+
+- Support expand/shrink on `buffer-before` and `buffer-after`
+
+### Changed
+
+- Make `forward-line-edge` work like `backward-line-edge`
+
 ## [0.4.0] - 2026-01-01
 
 ### Added
