@@ -30,6 +30,13 @@ Select & Copy Things Easily in VS Code - a port of [easy-kill](https://github.co
 
 Note: Movement commands support selection when invoked with shift key.
 
+**Duplicate Commands:**
+
+- **Easy Kill: Duplicate After** - Insert a copy after the selection
+- **Easy Kill: Duplicate Before** - Insert a copy before the selection
+
+These commands duplicate the current selection, or if nothing is selected, the first matching object type from `easyKill.objectTypeOrderForDuplicate` (default: line).  The original text remains selected, entering Select mode so you can press <kbd>y</kbd> repeatedly to create more copies.
+
 ### Interactive Selection
 
 After triggering a command, you can interactively adjust the selection:
@@ -39,6 +46,7 @@ After triggering a command, you can interactively adjust the selection:
 - **Expand** (<kbd>+</kbd>/<kbd>=</kbd>) - Expand selection by 1
 - **Shrink** (<kbd>-</kbd>) - Shrink selection by 1
 - **Cycle** (<kbd>Space</kbd>) - Cycle through selection types
+- **Duplicate After** (<kbd>y</kbd>) - Insert a copy after the selection
 - **Add to Count** (<kbd>1</kbd>-<kbd>9</kbd>) - Add N to current count (e.g., pressing <kbd>4</kbd> when count is 1 expands to 5 instances; pressing <kbd>4</kbd> when count is -1 expands to 3 instances)
 - **Reset** (<kbd>0</kbd>) - Reset to initial size (count = 1)
 - **Change Type** (letter keys) - Switch to specific selection type (see Selection Types below)
