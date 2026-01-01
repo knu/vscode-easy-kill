@@ -443,7 +443,9 @@
     "format:check": "prettier --check \"src/**/*.ts\" \"*.json\"",
     "test": "vscode-test",
     "package": "vsce package",
-    "publish": "vsce publish"
+    "publish": "npm run publish:vsce && npm run publish:ovsx",
+    "publish:vsce": "vsce publish --packagePath \"$(npm pkg get name version | jq -rs '.[0] | \"\\(.name)-\\(.version).vsix\"')\"",
+    "publish:ovsx": "ovsx publish --packagePath \"$(npm pkg get name version | jq -rs '.[0] | \"\\(.name)-\\(.version).vsix\"')\""
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -454,6 +456,7 @@
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
+    "ovsx": "^0.10.7",
     "prettier": "^3.7.4",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.50.0"
