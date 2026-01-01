@@ -66,6 +66,40 @@ suite("Buffer Bounds Tests", () => {
       assert.strictEqual(doc.getText(selection.range), "first line\nsecond ");
     });
 
+    test("includes current line on expand", async () => {
+      const doc = new MockTextDocument("first line\nsecond line\nthird line");
+      const editor = createMockEditor(doc);
+
+      const initialSelection: Selection = {
+        type: "buffer-before",
+        range: new vscode.Range(pos(1, 7), pos(1, 7)),
+        initialPosition: pos(1, 7),
+        text: "",
+      };
+
+      const selection = await bufferBeforeBounds.getNewSelection(editor, initialSelection, 1);
+
+      assert.ok(selection);
+      assert.strictEqual(doc.getText(selection.range), "first line\nsecond line\n");
+    });
+
+    test("excludes current line on shrink", async () => {
+      const doc = new MockTextDocument("first line\nsecond line\nthird line");
+      const editor = createMockEditor(doc);
+
+      const initialSelection: Selection = {
+        type: "buffer-before",
+        range: new vscode.Range(pos(1, 7), pos(1, 7)),
+        initialPosition: pos(1, 7),
+        text: "",
+      };
+
+      const selection = await bufferBeforeBounds.getNewSelection(editor, initialSelection, -1);
+
+      assert.ok(selection);
+      assert.strictEqual(doc.getText(selection.range), "first line\n");
+    });
+
     test("handles position at start", async () => {
       const doc = new MockTextDocument("first line");
       const editor = createMockEditor(doc);
@@ -110,6 +144,40 @@ suite("Buffer Bounds Tests", () => {
 
       assert.ok(range);
       assert.strictEqual(doc.getText(range), "line\nthird line");
+    });
+
+    test("includes current line on expand", async () => {
+      const doc = new MockTextDocument("first line\nsecond line\nthird line");
+      const editor = createMockEditor(doc);
+
+      const initialSelection: Selection = {
+        type: "buffer-after",
+        range: new vscode.Range(pos(1, 7), pos(1, 7)),
+        initialPosition: pos(1, 7),
+        text: "",
+      };
+
+      const selection = await bufferAfterBounds.getNewSelection(editor, initialSelection, 1);
+
+      assert.ok(selection);
+      assert.strictEqual(doc.getText(selection.range), "second line\nthird line");
+    });
+
+    test("excludes current line on shrink", async () => {
+      const doc = new MockTextDocument("first line\nsecond line\nthird line");
+      const editor = createMockEditor(doc);
+
+      const initialSelection: Selection = {
+        type: "buffer-after",
+        range: new vscode.Range(pos(1, 7), pos(1, 7)),
+        initialPosition: pos(1, 7),
+        text: "",
+      };
+
+      const selection = await bufferAfterBounds.getNewSelection(editor, initialSelection, -1);
+
+      assert.ok(selection);
+      assert.strictEqual(doc.getText(selection.range), "third line");
     });
 
     test("handles position at end", async () => {
