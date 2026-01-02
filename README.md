@@ -2,6 +2,11 @@
 
 Select & Copy Things Easily in VS Code - a port of [easy-kill](https://github.com/leoliu/easy-kill) for Emacs.
 
+## Install
+
+- Visual Studio Marketplace: https://marketplace.visualstudio.com/items?itemName=knu.easy-kill.  Official Microsoft marketplace listing for VS Code.
+- Open VSX: https://open-vsx.org/extension/knu/easy-kill.  Alternative registry used by VSCodium and other forks.
+
 ## Features
 
 - **Drop-in replacement for standard copy** (<kbd>Cmd</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>C</kbd>) - works with existing selections or triggers intelligent selection when no text is selected
