@@ -2,7 +2,7 @@
   "name": "easy-kill",
   "displayName": "Easy Kill",
   "description": "Select & Copy Things Easily in VS Code - a port of easy-kill for Emacs",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "publisher": "knu",
   "author": "Akinori Musha",
   "license": "MIT",
