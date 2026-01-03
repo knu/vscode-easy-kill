@@ -135,7 +135,7 @@ This extension is a port of [easy-kill](https://github.com/leoliu/easy-kill) and
 
 ## License
 
-Copyright (c) 2025 Akinori Musha
+Copyright (c) 2025-2026 Akinori Musha
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
