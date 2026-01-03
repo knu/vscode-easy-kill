@@ -68,7 +68,7 @@ async function changeSelection(editor: vscode.TextEditor, selection: vscode.Sele
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  debug.enabled = process.env.EASY_KILL_DEBUG === "true" || context.extensionMode === vscode.ExtensionMode.Development;
+  debug.enabled = context.extensionMode === vscode.ExtensionMode.Development;
 
   debug("[Easy Kill] Activating extension");
   debug(

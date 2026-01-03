@@ -25,6 +25,7 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run format:check
+      - run: npm run compile-web
       - name: Run tests
         run: xvfb-run -a npm test
         if: runner.os == 'Linux'
