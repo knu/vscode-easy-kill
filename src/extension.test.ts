@@ -1,0 +1,62 @@
+import * as assert from "assert";
+import * as vscode from "vscode";
+import { pos, runCommandAndWaitForDocument, runCommandAndWaitForSelection, withEditor } from "./test-helpers";
+
+suite("Extension Command Tests", () => {
+  suiteSetup(async () => {
+    const extension = vscode.extensions.getExtension("knu.easy-kill");
+    await extension?.activate();
+  });
+
+  suite("Movement commands", () => {
+    test("forward word moves to word end", async () => {
+      await withEditor("foo bar", async (editor) => {
+        editor.selection = new vscode.Selection(pos(0, 0), pos(0, 0));
+        await runCommandAndWaitForSelection(editor, "easyKill.forwardWord");
+        assert.strictEqual(editor.selection.active.character, 3);
+      });
+    });
+
+    test("backward word moves to word start", async () => {
+      await withEditor("foo bar", async (editor) => {
+        editor.selection = new vscode.Selection(pos(0, 7), pos(0, 7));
+        await runCommandAndWaitForSelection(editor, "easyKill.backwardWord");
+        assert.strictEqual(editor.selection.active.character, 4);
+      });
+    });
+
+    test("forward sentence moves to sentence end", async () => {
+      await withEditor("First. Second.", async (editor) => {
+        editor.selection = new vscode.Selection(pos(0, 0), pos(0, 0));
+        await runCommandAndWaitForSelection(editor, "easyKill.forwardSentence");
+        assert.strictEqual(editor.selection.active.character, 7);
+      });
+    });
+
+    test("backward sentence moves to sentence start", async () => {
+      await withEditor("First. Second.", async (editor) => {
+        editor.selection = new vscode.Selection(pos(0, 8), pos(0, 8));
+        await runCommandAndWaitForSelection(editor, "easyKill.backwardSentence");
+        assert.strictEqual(editor.selection.active.character, 7);
+      });
+    });
+  });
+
+  suite("Duplicate commands", () => {
+    test("duplicate after inserts after current line", async () => {
+      await withEditor("foo\nbar\n", async (editor) => {
+        editor.selection = new vscode.Selection(pos(0, 0), pos(0, 0));
+        await runCommandAndWaitForDocument(editor.document, "easyKill.duplicateAfter");
+        assert.strictEqual(editor.document.getText(), "foo\nfoo\nbar\n");
+      });
+    });
+
+    test("duplicate before inserts before current line", async () => {
+      await withEditor("foo\nbar\n", async (editor) => {
+        editor.selection = new vscode.Selection(pos(0, 0), pos(0, 0));
+        await runCommandAndWaitForDocument(editor.document, "easyKill.duplicateBefore");
+        assert.strictEqual(editor.document.getText(), "foo\nfoo\nbar\n");
+      });
+    });
+  });
+});

@@ -1,126 +1,51 @@
 import * as vscode from "vscode";
 
-export class MockTextDocument implements vscode.TextDocument {
-  constructor(private content: string) {}
+export async function withEditor(content: string, fn: (editor: vscode.TextEditor) => Thenable<void>): Promise<void> {
+  const document = await vscode.workspace.openTextDocument({
+    language: "plaintext",
+    content,
+  });
+  const editor = await vscode.window.showTextDocument(document);
+  await fn(editor);
+}
 
-  get uri(): vscode.Uri {
-    return vscode.Uri.file("/test.txt");
-  }
+export async function runCommandAndWaitForDocument(
+  document: vscode.TextDocument,
+  command: string,
+  args?: unknown
+): Promise<void> {
+  const changed = new Promise<void>((resolve) => {
+    const subscription = vscode.workspace.onDidChangeTextDocument((event) => {
+      if (event.document !== document) return;
+      subscription.dispose();
+      resolve();
+    });
+  });
 
-  get fileName(): string {
-    return "/test.txt";
-  }
+  await vscode.commands.executeCommand(command, args);
+  await changed;
+}
 
-  get isUntitled(): boolean {
-    return false;
-  }
-
-  get languageId(): string {
-    return "plaintext";
-  }
-
-  get version(): number {
-    return 1;
-  }
-
-  get isDirty(): boolean {
-    return false;
-  }
-
-  get isClosed(): boolean {
-    return false;
-  }
-
-  save(): Thenable<boolean> {
-    return Promise.resolve(true);
-  }
-
-  get eol(): vscode.EndOfLine {
-    return vscode.EndOfLine.LF;
-  }
-
-  get lineCount(): number {
-    return this.content.split("\n").length;
-  }
-
-  lineAt(line: number | vscode.Position): vscode.TextLine {
-    const lineNumber = typeof line === "number" ? line : line.line;
-    const lines = this.content.split("\n");
-    const text = lines[lineNumber] || "";
-
-    return {
-      lineNumber,
-      text,
-      range: new vscode.Range(lineNumber, 0, lineNumber, text.length),
-      rangeIncludingLineBreak: new vscode.Range(lineNumber, 0, lineNumber + 1, 0),
-      firstNonWhitespaceCharacterIndex: text.search(/\S/),
-      isEmptyOrWhitespace: text.trim().length === 0,
-    };
-  }
-
-  offsetAt(position: vscode.Position): number {
-    const lines = this.content.split("\n");
-    let offset = 0;
-    for (let i = 0; i < position.line; i++) {
-      offset += lines[i].length + 1;
-    }
-    return offset + position.character;
-  }
-
-  positionAt(offset: number): vscode.Position {
-    const lines = this.content.split("\n");
-    let currentOffset = 0;
-    for (let line = 0; line < lines.length; line++) {
-      const lineLength = lines[line].length;
-      if (currentOffset + lineLength >= offset) {
-        return new vscode.Position(line, offset - currentOffset);
+export async function runCommandAndWaitForSelection(
+  editor: vscode.TextEditor,
+  command: string,
+  args?: unknown
+): Promise<void> {
+  const initialSelection = editor.selection;
+  const changed = new Promise<void>((resolve) => {
+    const subscription = vscode.window.onDidChangeTextEditorSelection((event) => {
+      if (event.textEditor.document !== editor.document) return;
+      const { selection } = event.textEditor;
+      if (selection.active.isEqual(initialSelection.active) && selection.anchor.isEqual(initialSelection.anchor)) {
+        return;
       }
-      currentOffset += lineLength + 1;
-    }
-    return new vscode.Position(lines.length - 1, lines[lines.length - 1].length);
-  }
+      subscription.dispose();
+      resolve();
+    });
+  });
 
-  getText(range?: vscode.Range): string {
-    if (!range) {
-      return this.content;
-    }
-    const start = this.offsetAt(range.start);
-    const end = this.offsetAt(range.end);
-    return this.content.substring(start, end);
-  }
-
-  getWordRangeAtPosition(position: vscode.Position, regex?: RegExp): vscode.Range | undefined {
-    const line = this.lineAt(position.line);
-    const text = line.text;
-
-    const wordPattern = regex || /\w+/g;
-
-    let match: RegExpExecArray | null;
-    while ((match = wordPattern.exec(text)) !== null) {
-      const start = match.index;
-      const end = start + match[0].length;
-
-      if (position.character >= start && position.character <= end) {
-        return new vscode.Range(position.line, start, position.line, end);
-      }
-    }
-
-    return undefined;
-  }
-
-  validateRange(range: vscode.Range): vscode.Range {
-    return range;
-  }
-
-  validatePosition(position: vscode.Position): vscode.Position {
-    return position;
-  }
-
-  get encoding(): string {
-    return "utf-8";
-  }
-
-  notebook: vscode.NotebookDocument | undefined = undefined;
+  await vscode.commands.executeCommand(command, args);
+  await changed;
 }
 
 export function pos(line: number, character: number): vscode.Position {
