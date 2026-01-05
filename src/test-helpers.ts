@@ -23,7 +23,7 @@ export async function runCommandAndWaitForDocument(
   });
 
   await vscode.commands.executeCommand(command, args);
-  await changed;
+  await waitWithTimeout(changed, 1000, "Document did not change");
 }
 
 export async function runCommandAndWaitForSelection(
@@ -45,9 +45,35 @@ export async function runCommandAndWaitForSelection(
   });
 
   await vscode.commands.executeCommand(command, args);
-  await changed;
+
+  const poll = async () => {
+    const deadline = Date.now() + 1000;
+    while (Date.now() < deadline) {
+      const { selection } = editor;
+      if (!selection.active.isEqual(initialSelection.active) || !selection.anchor.isEqual(initialSelection.anchor)) {
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    throw new Error("Selection did not change");
+  };
+
+  await Promise.race([changed, poll()]);
 }
 
 export function pos(line: number, character: number): vscode.Position {
   return new vscode.Position(line, character);
+}
+
+async function waitWithTimeout(promise: Promise<void>, timeoutMs: number, message: string): Promise<void> {
+  let timeoutId: NodeJS.Timeout | undefined;
+  const timeout = new Promise<void>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+
+  try {
+    await Promise.race([promise, timeout]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
 }

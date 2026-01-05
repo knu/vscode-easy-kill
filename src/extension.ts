@@ -311,7 +311,7 @@ async function tryInstantCopy(
   currentSelection = selection;
   isSelectMode = selectMode;
 
-  updateSelection(editor, selection, selectMode);
+  await updateSelection(editor, selection, selectMode);
   return true;
 }
 
@@ -370,7 +370,7 @@ async function tryThingType(
     currentSelection = newSelection;
     isSelectMode = selectMode;
 
-    updateSelection(editor, newSelection, selectMode);
+    await updateSelection(editor, newSelection, selectMode);
     return true;
   }
 
@@ -471,7 +471,7 @@ async function startDuplicate(after: boolean, savedInitialPosition?: vscode.Posi
     text,
   };
 
-  updateSelection(editor, currentSelection, true);
+  await updateSelection(editor, currentSelection, true);
 }
 
 async function updateSelection(editor: vscode.TextEditor, selection: Selection, selectMode: boolean) {

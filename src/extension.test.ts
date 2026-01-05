@@ -8,6 +8,53 @@ suite("Extension Command Tests", () => {
     await extension?.activate();
   });
 
+  suite("Selection commands", () => {
+    setup(async () => {
+      await vscode.commands.executeCommand("easyKill.cancel");
+    });
+
+    test("copy keeps existing selection", async () => {
+      await withEditor("foo bar", async (editor) => {
+        const selection = new vscode.Selection(pos(0, 0), pos(0, 3));
+        editor.selection = selection;
+        await vscode.commands.executeCommand("easyKill.copy");
+        assert.ok(editor.selection.isEqual(selection));
+      });
+    });
+
+    test("copy selects word at cursor when no selection", async () => {
+      await withEditor("foo bar", async (editor) => {
+        editor.selection = new vscode.Selection(pos(0, 1), pos(0, 1));
+        await runCommandAndWaitForSelection(editor, "easyKill.copy");
+        assert.strictEqual(editor.document.getText(editor.selection), "foo");
+      });
+    });
+
+    test("select selects word at cursor when no selection", async () => {
+      await withEditor("foo bar", async (editor) => {
+        editor.selection = new vscode.Selection(pos(0, 1), pos(0, 1));
+        await runCommandAndWaitForSelection(editor, "easyKill.select");
+        assert.strictEqual(editor.document.getText(editor.selection), "foo");
+      });
+    });
+
+    test("copyWord selects the current word", async () => {
+      await withEditor("foo bar", async (editor) => {
+        editor.selection = new vscode.Selection(pos(0, 5), pos(0, 5));
+        await runCommandAndWaitForSelection(editor, "easyKill.copyWord");
+        assert.strictEqual(editor.document.getText(editor.selection), "bar");
+      });
+    });
+
+    test("selectWord selects the current word", async () => {
+      await withEditor("foo bar", async (editor) => {
+        editor.selection = new vscode.Selection(pos(0, 5), pos(0, 5));
+        await runCommandAndWaitForSelection(editor, "easyKill.selectWord");
+        assert.strictEqual(editor.document.getText(editor.selection), "bar");
+      });
+    });
+  });
+
   suite("Movement commands", () => {
     test("forward word moves to word end", async () => {
       await withEditor("foo bar", async (editor) => {
