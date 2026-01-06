@@ -13,13 +13,13 @@ you select and copy things easily.  This is a port of
 ## Extension Listings
 
 - **Open VSX Registry**
-  https://open-vsx.org/extension/knu/easy-kill
+  [https://open-vsx.org/extension/knu/easy-kill](https://open-vsx.org/extension/knu/easy-kill)
 
 - **VS Code Marketplace**
-  https://marketplace.visualstudio.com/items?itemName=knu.easy-kill
+  [https://marketplace.visualstudio.com/items?itemName=knu.easy-kill](https://marketplace.visualstudio.com/items?itemName=knu.easy-kill)
 
 - **GitHub Repository**
-  https://github.com/knu/vscode-easy-kill
+  [https://github.com/knu/vscode-easy-kill](https://github.com/knu/vscode-easy-kill)
 
 ---
 
