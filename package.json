@@ -14,7 +14,7 @@
   "bugs": {
     "url": "https://github.com/knu/vscode-easy-kill/issues"
   },
-  "homepage": "https://github.com/knu/vscode-easy-kill#readme",
+  "homepage": "https://vscode-easy-kill.idaemons.org/",
   "engines": {
     "vscode": "^1.95.0"
   },
