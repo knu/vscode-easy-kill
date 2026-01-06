@@ -13,7 +13,8 @@ Select & Copy Things Easily in VS Code - a port of [easy-kill](https://github.co
 - **Quick copying/selecting** with intelligent selection
 - **30+ selection types**: subword, word, line, sentence, paragraph, sexp, defun, function, block, string, parentheses, brackets, curlies (with/without delimiters), buffer, filename, URL, email, character search, and more
 - **Interactive expansion/shrinking** of selections
-- **Emacs-like workflow** for efficient text manipulation
+- **Duplicate selections** quickly before or after the current selection
+- **Vim-friendly character search** with f/t-style selection (forward/backward, to/up-to)
 
 ## Usage
 
