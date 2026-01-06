@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3] - 2026-01-06
+
+### Changed
+
+- Improve test coverage
+- Set GitHub Pages homepage URL
+
 ## [0.4.2] - 2026-01-03
 
 ### Added
