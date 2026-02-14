@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Change copy-mode behavior so OS clipboard writes happen only when a copy session is finalized (including explicit accept), preventing intermediate selection updates from overwriting external clipboard content.
+- Clarify that copy-mode integration documents finalization semantics for copy-mode and emacs-mcx sync.
+- Simplify emacs-mcx integration to always use `emacs-mcx.killRingSave` for final selection sync.
+- Avoid writing select-mode operations into the emacs-mcx kill ring.
+- Keep emacs-mcx availability checks lightweight and asynchronous.
+
 ## [0.4.3] - 2026-01-06
 
 ### Changed

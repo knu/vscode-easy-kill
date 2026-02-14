@@ -32,6 +32,7 @@ let globalTypeDisposable: vscode.Disposable | null = null;
 let globalChangeDisposable: vscode.Disposable | null = null;
 let globalSelectionDisposable: vscode.Disposable | null = null;
 let isInternalSelectionChange = false;
+let emacsMcxAvailable = false;
 
 export async function preserveSelection<T>(editor: vscode.TextEditor, fn: () => Promise<T>): Promise<T> {
   const originalSelection = editor.selection;
@@ -79,6 +80,17 @@ export function activate(context: vscode.ExtensionContext) {
   initializeThingBoundsTable();
   debug("[Easy Kill] Initialized bounds:", Object.keys(thingBoundsTable).sort().join(", "));
 
+  void updateEmacsMcxAvailability().catch((error) => {
+    debug("[Easy Kill] Failed to initialize emacs-mcx availability:", error);
+  });
+  context.subscriptions.push(
+    vscode.extensions.onDidChange(() => {
+      void updateEmacsMcxAvailability().catch((error) => {
+        debug("[Easy Kill] Failed to update emacs-mcx availability:", error);
+      });
+    })
+  );
+
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   context.subscriptions.push(statusBarItem);
 
@@ -86,9 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("easyKill.copy", async () => {
       const editor = vscode.window.activeTextEditor;
       if (editor && !editor.selection.isEmpty) {
-        const text = editor.document.getText(editor.selection);
-        await vscode.commands.executeCommand("editor.action.clipboardCopyAction");
-        showCopiedMessage(text);
+        await copySelectionToClipboard(editor);
         return;
       }
       return startEasyKill(false);
@@ -283,15 +293,13 @@ async function tryInstantCopy(
     return false;
   }
 
-  const initialSelection: Selection = {
+  const selection = await bounds.getNewSelection(editor, {
     type,
     range: new vscode.Range(position, position),
     initialPosition: position,
     text: "",
     arg: undefined,
-  };
-
-  const selection = await bounds.getNewSelection(editor, initialSelection);
+  });
   if (!selection) {
     isActive = false;
     vscode.commands.executeCommand("setContext", "easyKillActive", false);
@@ -353,7 +361,7 @@ async function tryThingType(
     }
   }
 
-  const newSelection = await bounds.getNewSelection(editor, {
+  const selection = await bounds.getNewSelection(editor, {
     type,
     range: new vscode.Range(position, position),
     initialPosition: position,
@@ -361,16 +369,16 @@ async function tryThingType(
     arg,
   });
 
-  if (newSelection && !newSelection.range.isEmpty) {
+  if (selection && !selection.range.isEmpty) {
     if (!isActive) {
       isActive = true;
       vscode.commands.executeCommand("setContext", "easyKillActive", true);
     }
 
-    currentSelection = newSelection;
+    currentSelection = selection;
     isSelectMode = selectMode;
 
-    await updateSelection(editor, newSelection, selectMode);
+    await updateSelection(editor, selection, selectMode);
     return true;
   }
 
@@ -478,7 +486,9 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
   await changeSelection(editor, new vscode.Selection(selection.range.start, selection.range.end));
   updateStatusBar(selection);
   if (!selectMode) {
-    await copySelectionToClipboard(editor);
+    if (emacsMcxAvailable) {
+      void syncEmacsMcxKillRing(editor);
+    }
   }
 
   globalTypeDisposable?.dispose();
@@ -490,6 +500,13 @@ async function updateSelection(editor: vscode.TextEditor, selection: Selection, 
 
     awaitingArgument?.resolve(null);
     awaitingArgument = null;
+
+    if (!resetCursor && !isSelectMode && !editor.selection.isEmpty) {
+      void copySelectionToClipboard(editor);
+      if (emacsMcxAvailable) {
+        void syncEmacsMcxKillRing(editor);
+      }
+    }
 
     if (resetCursor && initialCursorPosition) {
       editor.selection = new vscode.Selection(initialCursorPosition, initialCursorPosition);
@@ -681,12 +698,9 @@ async function changeSelectionType(editor: vscode.TextEditor, type: ThingType) {
 async function expandSelection(editor: vscode.TextEditor, delta: number) {
   if (!currentSelection) return;
 
-  const { type } = currentSelection;
-  const bounds = thingBoundsTable[type];
-  const newSelection = await bounds.getNewSelection(editor, currentSelection, delta);
-
-  if (newSelection) {
-    currentSelection = newSelection;
+  const selection = await thingBoundsTable[currentSelection.type].getNewSelection(editor, currentSelection, delta);
+  if (selection) {
+    currentSelection = selection;
     await updateSelection(editor, currentSelection, isSelectMode);
   }
 }
@@ -694,12 +708,9 @@ async function expandSelection(editor: vscode.TextEditor, delta: number) {
 async function shrinkSelection(editor: vscode.TextEditor, delta: number) {
   if (!currentSelection) return;
 
-  const { type } = currentSelection;
-  const bounds = thingBoundsTable[type];
-  const newSelection = await bounds.getNewSelection(editor, currentSelection, -delta);
-
-  if (newSelection) {
-    currentSelection = newSelection;
+  const selection = await thingBoundsTable[currentSelection.type].getNewSelection(editor, currentSelection, -delta);
+  if (selection) {
+    currentSelection = selection;
     await updateSelection(editor, currentSelection, isSelectMode);
   }
 }
@@ -707,12 +718,9 @@ async function shrinkSelection(editor: vscode.TextEditor, delta: number) {
 async function resetSelection(editor: vscode.TextEditor) {
   if (!currentSelection) return;
 
-  const { type } = currentSelection;
-  const bounds = thingBoundsTable[type];
-  const newSelection = await bounds.getNewSelection(editor, currentSelection, undefined);
-
-  if (newSelection) {
-    currentSelection = newSelection;
+  const selection = await thingBoundsTable[currentSelection.type].getNewSelection(editor, currentSelection, undefined);
+  if (selection) {
+    currentSelection = selection;
     await updateSelection(editor, currentSelection, isSelectMode);
   }
 }
@@ -730,8 +738,10 @@ async function cycleSelection(editor: vscode.TextEditor) {
 function showCopiedMessage(text: string) {
   if (text !== lastCopiedText) {
     copiedMessageDisposable?.dispose();
-    const preview = /^.{0,50}$/.test(text) ? text : text.slice(0, 50) + "...";
-    copiedMessageDisposable = vscode.window.setStatusBarMessage(`$(clippy) Copied: ${preview}`, 2000);
+    copiedMessageDisposable = vscode.window.setStatusBarMessage(
+      `$(clippy) Copied: ${/^.{0,50}$/.test(text) ? text : text.slice(0, 50) + "..."}`,
+      2000
+    );
     lastCopiedText = text;
   }
 }
@@ -742,9 +752,37 @@ async function copyTextToClipboard(text: string) {
 }
 
 async function copySelectionToClipboard(editor: vscode.TextEditor) {
-  const text = editor.document.getText(editor.selection);
   await vscode.commands.executeCommand("editor.action.clipboardCopyAction");
-  showCopiedMessage(text);
+  showCopiedMessage(editor.document.getText(editor.selection));
+
+  if (emacsMcxAvailable) {
+    await syncEmacsMcxKillRing(editor);
+  }
+}
+
+const emacsMcxExtensionId = "tuttieee.emacs-mcx";
+
+async function updateEmacsMcxAvailability(): Promise<void> {
+  emacsMcxAvailable = !!vscode.extensions.getExtension(emacsMcxExtensionId);
+  if (!emacsMcxAvailable) {
+    debug("[Easy Kill] emacs-mcx available:", emacsMcxAvailable);
+    return;
+  }
+  debug("[Easy Kill] emacs-mcx available:", emacsMcxAvailable);
+}
+
+async function syncEmacsMcxKillRing(editor: vscode.TextEditor): Promise<void> {
+  if (editor.selection.isEmpty) {
+    return;
+  }
+
+  try {
+    await preserveSelection(editor, async () => {
+      await vscode.commands.executeCommand("emacs-mcx.killRingSave");
+    });
+  } catch (error) {
+    debug("[Easy Kill] Failed to push to emacs-mcx kill ring:", error);
+  }
 }
 
 function updateStatusBar(selection: Selection) {
