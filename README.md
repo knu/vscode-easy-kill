@@ -119,9 +119,10 @@ Available selection types (default key bindings shown in parentheses, customizab
 1. If text is selected, performs standard copy
 2. If no selection, triggers easy-kill (copy) mode:
    - Extension selects text starting from smallest match (word)
-   - Text is immediately copied to clipboard
+   - Selection is prepared first, then copied when the copy session is finalized (normally by `Enter`/`Return`)
+   - The session can also be finalized by other commands that leave Easy Kill copy-mode context
    - Adjust selection using quick pick menu
-   - Clipboard updates as you modify selection
+   - Selection changes do not copy to the OS clipboard until acceptance
 
 ### Select Mode (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>2</kbd>)
 
@@ -129,6 +130,12 @@ Available selection types (default key bindings shown in parentheses, customizab
 2. Extension selects text starting from smallest match (word)
 3. Adjust selection using quick pick menu
 4. On confirm, text is selected in editor (not copied)
+
+## Integration
+
+### Awesome Emacs Keymap (emacs-mcx)
+
+If you use [Awesome Emacs Keymap](https://marketplace.visualstudio.com/items?itemName=tuttieee.emacs-mcx) (emacs-mcx), Easy Kill integrates with its kill ring by sending only the final selection when the copy session ends.  Intermediate selection changes are never pushed to the OS clipboard or emacs-mcx.  Use <kbd>C-y</kbd> to yank the latest copy and <kbd>M-y</kbd> to cycle through earlier ones.
 
 ## Inspiration
 

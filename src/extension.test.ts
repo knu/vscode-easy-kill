@@ -89,6 +89,56 @@ suite("Extension Command Tests", () => {
     });
   });
 
+  suite("Clipboard behavior", () => {
+    test("does not copy to OS clipboard on intermediate selection changes", async () => {
+      const commandApi = vscode.commands as unknown as {
+        executeCommand: typeof vscode.commands.executeCommand;
+      };
+      const originalExecuteCommand = commandApi.executeCommand;
+      let clipboardCopyActionCount = 0;
+      const typeCommands: string[] = [];
+
+      commandApi.executeCommand = (async (command: string, ...args: unknown[]) => {
+        if (command === "editor.action.clipboardCopyAction") {
+          clipboardCopyActionCount += 1;
+          return Promise.resolve();
+        }
+        if (command === "type") {
+          const textArg = args[0] as { text?: string } | undefined;
+          if (textArg?.text !== undefined) {
+            typeCommands.push(textArg.text);
+          }
+        }
+
+        return originalExecuteCommand.call(vscode.commands, command, ...args);
+      }) as typeof vscode.commands.executeCommand;
+
+      try {
+        await withEditor("foo bar", async (editor) => {
+          editor.selection = new vscode.Selection(pos(0, 0), pos(0, 0));
+          await vscode.commands.executeCommand("easyKill.copy");
+
+          await vscode.commands.executeCommand("type", { text: "+" });
+          await vscode.commands.executeCommand("type", { text: "+" });
+          assert.deepStrictEqual(typeCommands, ["+", "+"]);
+          assert.strictEqual(clipboardCopyActionCount, 0, "selection changes should not trigger clipboard copy action");
+
+          await vscode.commands.executeCommand("type", { text: "\r" });
+          assert.deepStrictEqual(typeCommands, ["+", "+", "\r"]);
+
+          const deadline = Date.now() + 1000;
+          while (Date.now() < deadline && clipboardCopyActionCount < 1) {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+          }
+
+          assert.ok(clipboardCopyActionCount <= 1, "final accept should not trigger more than one clipboard copy");
+        });
+      } finally {
+        commandApi.executeCommand = originalExecuteCommand;
+      }
+    });
+  });
+
   suite("Duplicate commands", () => {
     test("duplicate after inserts after current line", async () => {
       await withEditor("foo\nbar\n", async (editor) => {
