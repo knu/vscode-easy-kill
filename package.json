@@ -469,7 +469,7 @@
     "npm-run-all2": "^8.0.4",
     "ovsx": "^0.10.7",
     "prettier": "^3.7.4",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.0",
     "typescript-eslint": "^8.50.0"
   }
 }
