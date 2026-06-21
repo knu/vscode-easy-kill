@@ -31,6 +31,19 @@ jobs:
         run: npm test
         if: runner.os != 'Linux'
 
+  test-gate:
+    name: Test
+    if: always()
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check matrix results
+        env:
+          RESULT: ${{ needs.test.result }}
+        run: |
+          set -euo pipefail
+          test "$RESULT" = success
+
   publish:
     if: startsWith(github.ref, 'refs/tags/')
     needs: test
