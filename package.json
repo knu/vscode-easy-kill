@@ -463,14 +463,14 @@
     "@typescript-eslint/eslint-plugin": "^8.50.0",
     "@typescript-eslint/parser": "^8.50.0",
     "@vscode/test-cli": "^0.0.15",
-    "@vscode/test-electron": "^2.5.2",
+    "@vscode/test-electron": "^3.0.0",
     "@vscode/test-web": "^0.0.81",
     "@vscode/vsce": "^3.7.1",
     "esbuild": "^0.28.0",
-    "npm-run-all2": "^8.0.4",
-    "ovsx": "^0.10.7",
+    "npm-run-all2": "^9.0.0",
+    "ovsx": "^1.0.0",
     "prettier": "^3.7.4",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.0",
     "typescript-eslint": "^8.50.0"
   }
 }
