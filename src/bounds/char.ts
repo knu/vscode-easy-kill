@@ -3,10 +3,7 @@ import { ThingBounds, ThingType, Selection } from "../types";
 import { withAwaitingArgument } from "../extension";
 
 type CharSearchType =
-  | "string-to-char-forward"
-  | "string-up-to-char-forward"
-  | "string-to-char-backward"
-  | "string-up-to-char-backward";
+  "string-to-char-forward" | "string-up-to-char-forward" | "string-to-char-backward" | "string-up-to-char-backward";
 
 interface CharSearchProperties {
   forward: boolean;
