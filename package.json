@@ -437,14 +437,14 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile && npm run compile-web",
-    "compile": "tsc -p ./",
+    "compile": "node ./node_modules/@typescript/native/bin/tsc -p ./",
     "compile-web": "esbuild ./src/extension.ts --bundle --outfile=dist/web/extension.js --external:vscode --format=cjs --platform=browser",
-    "watch": "tsc -watch -p ./",
+    "watch": "node ./node_modules/@typescript/native/bin/tsc -watch -p ./",
     "watch-web": "npm run compile-web -- --sourcemap --watch",
     "format:check": "prettier --check \"src/**/*.ts\" \"*.json\"",
     "lint:eslint": "eslint src --ext ts",
     "lint": "npm-run-all -s --continue-on-error format:check lint:eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node ./node_modules/@typescript/native/bin/tsc --noEmit",
     "check": "npm-run-all -s --continue-on-error lint typecheck",
     "format": "prettier --write \"src/**/*.ts\" \"*.json\"",
     "test:run": "vscode-test",
@@ -462,6 +462,7 @@
     "@types/vscode": "^1.95.0",
     "@typescript-eslint/eslint-plugin": "^8.50.0",
     "@typescript-eslint/parser": "^8.50.0",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.0.0",
     "@vscode/test-web": "^0.0.81",
@@ -470,7 +471,7 @@
     "npm-run-all2": "^9.0.0",
     "ovsx": "^1.0.0",
     "prettier": "^3.7.4",
-    "typescript": "^6.0.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.50.0"
   }
 }
