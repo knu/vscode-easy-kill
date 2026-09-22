@@ -466,7 +466,7 @@
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.0.0",
     "@vscode/test-web": "^0.0.81",
-    "@vscode/vsce": "^3.7.1",
+    "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.0",
     "npm-run-all2": "^9.0.0",
     "ovsx": "^1.0.0",
