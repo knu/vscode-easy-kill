@@ -26,13 +26,19 @@
       addLabels: ["dependencies:major"],
     },
     {
-      // Pin Node.js to v20: VS Code bundles Node 20 from 1.95 through 1.122,
-      // and Cursor lags further behind, so the published extension must keep
-      // running on Node 20.  Block Node upgrades across .node-version, CI
-      // workflows, the engines.node floor, and @types/node.
-      description: "Keep Node.js (and its types) on the v20 runtime floor",
+      // Keep runtime requirements and types compatible with older extension
+      // hosts.  The development Node.js version is managed separately.
+      description: "Keep the Node.js runtime floor and types on v20",
+      matchManagers: ["npm"],
       matchDepNames: ["node", "@types/node"],
       allowedVersions: "<21",
+    },
+    {
+      // Keep API types aligned with the minimum supported VS Code version.
+      description: "Keep VS Code API types on the 1.95 compatibility floor",
+      matchManagers: ["npm"],
+      matchDepNames: ["@types/vscode"],
+      allowedVersions: "~1.95.0",
     },
     {
       matchManagers: ["github-actions"],
