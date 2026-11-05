@@ -60,7 +60,7 @@ jobs:
       open-vsx-url: ${{ steps.metadata.outputs.open-vsx-url }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2.22.2
+        uses: step-security/harden-runner@v2.22.3
         with:
           egress-policy: audit
       - uses: actions/checkout@v7.0.1
@@ -116,7 +116,7 @@ jobs:
       contents: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2.22.2
+        uses: step-security/harden-runner@v2.22.3
         with:
           egress-policy: audit
       - name: Download extension package
@@ -140,7 +140,7 @@ jobs:
       url: ${{ needs.package.outputs.marketplace-url }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2.22.2
+        uses: step-security/harden-runner@v2.22.3
         with:
           egress-policy: audit
       - uses: actions/checkout@v7.0.1
@@ -172,7 +172,7 @@ jobs:
       url: ${{ needs.package.outputs.open-vsx-url }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2.22.2
+        uses: step-security/harden-runner@v2.22.3
         with:
           egress-policy: audit
       - uses: actions/checkout@v7.0.1
